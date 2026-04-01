@@ -1,23 +1,50 @@
 function saveOptions() {
-	chrome.storage.sync.set(
-		{
-			"address_protocol":   $("#address_protocol").val(),
-			"address_ip":         $("#address_ip").val(),
-			"address_port":       $("#address_port").val(),
-			"address_base":       $("#address_base").val(),
-			"password":           $("#password").val(),
-			"handle_torrents":    $("#handle_torrents").is(":checked"),
-			"handle_magnets":     $("#handle_magnets").is(":checked"),
-			"context_menu":       $("#context_menu").is(":checked"),
-			"badge_timeout":      parseInt($("#badge_timeout").val()),
-			"debug_mode":         $("#debug_mode").is(":checked"),
-			"dark_mode":          $("#dark_mode").val(),
-			"version":            chrome.runtime.getManifest().version
-		},
-		function () {
-			debug_log("Settings saved");
-		}
-	);
+	var plainPassword = $("#password").val();
+
+	// Encrypt password before saving
+	PasswordCrypto.encrypt(plainPassword).then(function (encryptedPassword) {
+		chrome.storage.sync.set(
+			{
+				"address_protocol":   $("#address_protocol").val(),
+				"address_ip":         $("#address_ip").val(),
+				"address_port":       $("#address_port").val(),
+				"address_base":       $("#address_base").val(),
+				"password":           encryptedPassword,
+				"handle_torrents":    $("#handle_torrents").is(":checked"),
+				"handle_magnets":     $("#handle_magnets").is(":checked"),
+				"context_menu":       $("#context_menu").is(":checked"),
+				"badge_timeout":      parseInt($("#badge_timeout").val()),
+				"debug_mode":         $("#debug_mode").is(":checked"),
+				"dark_mode":          $("#dark_mode").val(),
+				"version":            chrome.runtime.getManifest().version
+			},
+			function () {
+				debug_log("Settings saved (password encrypted)");
+			}
+		);
+	}).catch(function (err) {
+		console.error("Failed to encrypt password:", err);
+		// Fallback: save without encryption
+		chrome.storage.sync.set(
+			{
+				"address_protocol":   $("#address_protocol").val(),
+				"address_ip":         $("#address_ip").val(),
+				"address_port":       $("#address_port").val(),
+				"address_base":       $("#address_base").val(),
+				"password":           plainPassword,
+				"handle_torrents":    $("#handle_torrents").is(":checked"),
+				"handle_magnets":     $("#handle_magnets").is(":checked"),
+				"context_menu":       $("#context_menu").is(":checked"),
+				"badge_timeout":      parseInt($("#badge_timeout").val()),
+				"debug_mode":         $("#debug_mode").is(":checked"),
+				"dark_mode":          $("#dark_mode").val(),
+				"version":            chrome.runtime.getManifest().version
+			},
+			function () {
+				debug_log("Settings saved (encryption failed, plain text fallback)");
+			}
+		);
+	});
 }
 
 $(function () {
@@ -54,7 +81,7 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
 				messages.push("Address base updated.");
 				break;
 			case "password":
-				messages.push("Password updated.");
+				messages.push("Password updated (encrypted).");
 				break;
 			case "handle_torrents":
 				var handle_torrents = $("#handle_torrents").is(":checked");
@@ -91,15 +118,24 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
 	}
 });
 
+// Load saved options and decrypt password
 chrome.storage.sync.get(function (items) {
 	for (var i in items) {
 		debug_log(i + "\t" + items[i] + "\t" + (typeof items[i]));
-		$("#" + i).val(items[i]);
+		if (i === "password") {
+			// Decrypt password before showing in field
+			PasswordCrypto.decrypt(items[i]).then(function (plainPassword) {
+				$("#password").val(plainPassword);
+			}).catch(function () {
+				$("#password").val("");
+			});
+		} else {
+			$("#" + i).val(items[i]);
+		}
 		if (typeof items[i] === "boolean") {
 			$("#" + i).attr("checked", items[i]);
 		}
 	}
-	// If new version with incompatible settings, save defaults
 	if (window.location.search == "?newver=true") {
 		debug_log("New version. Saving settings.");
 		saveOptions();

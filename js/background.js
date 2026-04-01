@@ -52,17 +52,13 @@ const DelugeAPI = {
 	API_UNKNOWN_ERROR_CODE: 3,
 
 	endpoint() {
-		const proto = ExtensionConfig.address_protocol || "http";
+		const proto = ExtensionConfig.address_protocol || "https";
 		const ip    = ExtensionConfig.address_ip || "";
 		const port  = ExtensionConfig.address_port || "8112";
 		const base  = ExtensionConfig.address_base;
 		return `${proto}://${ip}:${port}/${base ? base + "/" : ""}`;
 	},
 
-	/**
-	 * Make a JSON-RPC call to Deluge.
-	 * Returns { result, error } — caller checks which is set.
-	 */
 	async call(method, params = [], options = {}) {
 		const url = this.endpoint() + "json";
 		const timeout = options.timeout || 10000;
@@ -97,12 +93,10 @@ const DelugeAPI = {
 
 // ── Background Logic ────────────────────────────────────────────────────────
 let statusTimer = null;
-let contextMenuId = null;
 
 const STATUS_CHECK_ERROR_INTERVAL = 120000;
 const STATUS_CHECK_INTERVAL       = 60000;
 
-// Badge helper
 function badgeText(text, colour) {
 	debug_log("badgeText:", text, colour);
 	chrome.action.setBadgeText({ text });
@@ -133,18 +127,60 @@ async function connectToDaemon() {
 	if (conn.error) throw new Error("Failed to connect to daemon");
 }
 
+// ── Password Crypto (AES-GCM) ───────────────────────────────────────────────
+const PasswordCrypto = {
+	_cachedKey: null,
+	KEY_STORAGE: "encryption_key_jwk",
+
+	async getKey() {
+		if (this._cachedKey) return this._cachedKey;
+
+		const result = await chrome.storage.local.get(this.KEY_STORAGE);
+		if (result && result[this.KEY_STORAGE]) {
+			this._cachedKey = await crypto.subtle.importKey(
+				"jwk", result[this.KEY_STORAGE],
+				{ name: "AES-GCM" }, false, ["encrypt", "decrypt"]
+			);
+		} else {
+			const key = await crypto.subtle.generateKey(
+				{ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]
+			);
+			const jwk = await crypto.subtle.exportKey("jwk", key);
+			await chrome.storage.local.set({ [this.KEY_STORAGE]: jwk });
+			this._cachedKey = key;
+		}
+		return this._cachedKey;
+	},
+
+	async decrypt(stored) {
+		if (!stored || stored === "") return "";
+		try {
+			const parsed = JSON.parse(stored);
+			if (!parsed._encrypted) return stored;
+			const key = await this.getKey();
+			const iv = Uint8Array.from(atob(parsed.iv), c => c.charCodeAt(0));
+			const data = Uint8Array.from(atob(parsed.data), c => c.charCodeAt(0));
+			const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+			return new TextDecoder().decode(decrypted);
+		} catch (e) {
+			// Not encrypted (plain text from old version) — return as-is
+			return stored;
+		}
+	}
+};
+
+// ── Login (with password decryption) ────────────────────────────────────────
 async function login() {
-	return DelugeAPI.call("auth.login", [ExtensionConfig.password]);
+	const plainPassword = await PasswordCrypto.decrypt(ExtensionConfig.password);
+	return DelugeAPI.call("auth.login", [plainPassword]);
 }
 
 // ── Status Check ────────────────────────────────────────────────────────────
 async function checkStatus(options) {
 	debug_log("Deluge: Checking status");
-	console.log("Deluge: checkStatus called, endpoint:", DelugeAPI.endpoint());
 	clearTimeout(statusTimer);
 
 	const resp = await DelugeAPI.call("web.connected", [], options);
-	console.log("Deluge: web.connected response:", JSON.stringify(resp));
 
 	if (resp.result === true) {
 		activate();
@@ -195,20 +231,17 @@ async function checkStatus(options) {
 // ── Activate / Deactivate ───────────────────────────────────────────────────
 function activate() {
 	debug_log("Deluge: Extension activated");
-	console.log("Deluge: Setting active icon");
 	chrome.action.setIcon({
 		path: {
 			"16": "/images/icons/deluge_active.png",
 			"32": "/images/icons/deluge_active.png"
 		}
-	}).then(() => {
-		console.log("Deluge: Active icon set successfully");
 	}).catch((err) => {
-		console.error("Deluge: setIcon active FAILED:", err.message || err);
+		console.error("setIcon active failed:", err);
 		chrome.action.setIcon({
 			path: {
-				"16": "images/icons/deluge.png",
-				"32": "images/icons/deluge.png"
+				"16": "/images/icons/deluge.png",
+				"32": "/images/icons/deluge.png"
 			}
 		}).catch(() => {});
 	});
@@ -218,14 +251,13 @@ function activate() {
 
 function deactivate() {
 	debug_log("Extension deactivated");
-	console.log("Deluge: Setting inactive icon");
 	chrome.action.setIcon({
 		path: {
 			"16": "/images/icons/deluge.png",
 			"32": "/images/icons/deluge.png"
 		}
 	}).catch((err) => {
-		console.error("Deluge: setIcon deactivate FAILED:", err.message || err);
+		console.error("setIcon deactivate failed:", err);
 	});
 	chrome.action.setTitle({ title: chrome.i18n.getMessage("browser_title_disabled") });
 	chrome.runtime.sendMessage({ msg: "extension_deactivated" }).catch(() => {});
@@ -323,7 +355,6 @@ async function getVersion() {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	debug_log("Received message:", request.method || request.msg, request);
 
-	// Handle method-based messages (from content scripts and legacy)
 	switch (request.method) {
 		case "add_torrent_from_url":
 			addTorrentFromUrl(request.url, sender.tab?.id);
@@ -341,15 +372,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			sendResponse({ value: ExtensionConfig[request.key] });
 			return false;
 
-		// Messages from popup
 		case "check_status":
 			checkStatus({ timeout: 1000 }).then(result => sendResponse(result));
-			return true; // async
+			return true;
 
 		case "deluge_api":
 			DelugeAPI.call(request.apiMethod, request.params, request.options || {})
 				.then(resp => sendResponse(resp));
-			return true; // async
+			return true;
 
 		case "get_endpoint":
 			sendResponse({ endpoint: DelugeAPI.endpoint() });
@@ -367,15 +397,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // ── Startup ─────────────────────────────────────────────────────────────────
 async function start() {
 	await loadConfig();
-	console.log("Deluge: Config loaded:", JSON.stringify({
-		protocol: ExtensionConfig.address_protocol,
-		ip: ExtensionConfig.address_ip,
-		port: ExtensionConfig.address_port,
-		base: ExtensionConfig.address_base,
-		endpoint: DelugeAPI.endpoint()
-	}));
 
-	// Check for major version change
 	const manifest = chrome.runtime.getManifest();
 	if (
 		typeof ExtensionConfig.version === "undefined" ||
@@ -388,11 +410,8 @@ async function start() {
 	checkStatus();
 }
 
-// Service workers use the install/activate events
 chrome.runtime.onInstalled.addListener(() => {
-	console.log("Deluge: Extension installed/updated");
 	start();
 });
 
-// Also start on service worker wake-up (if not triggered by onInstalled)
 start();

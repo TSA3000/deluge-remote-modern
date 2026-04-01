@@ -1,23 +1,10 @@
-/*
- * Responsible for all display, page or functional control on the status page.
- *
- * - Setting refresh timers.
- * - Rendering HTML for table.
- * - Logic for action buttons.
- *
- * MV3: Uses chrome.runtime.sendMessage instead of getBackgroundPage().
- */
 $(function () {
 	var extensionActivated = false;
 	var $overlay = $("#overlay").css({ height: $(document).height() });
 
-	// Setup timer information.
 	const REFRESH_INTERVAL = 30000;
 	var refreshTimer = Timer(REFRESH_INTERVAL);
 
-	/*
-	 * Helper function for creating progress bar element.
-	 */
 	function progressBar(torrent) {
 		var $bar = $(document.createElement("div")).addClass("progress_bar");
 		$(document.createElement("div"))
@@ -91,13 +78,9 @@ $(function () {
 	}
 
 	function renderTable() {
-		// Set the href for the title
 		$("#deluge_webui_link").attr("href", Deluge.endpoint());
-
-		// Clear the table
 		$("#torrent_container").empty();
 
-		// Sort the torrents
 		var torrents = Torrents.sort(localStorage.sortColumn || "position").getAll();
 		if (localStorage.sortMethod === "desc") {
 			torrents.reverse();
@@ -144,7 +127,6 @@ $(function () {
 		}
 	}
 
-	// ── Action Handlers ─────────────────────────────────────────────────
 	(function () {
 		function getRowData(element) {
 			var parent = $(element).parents(".torrent_row");
@@ -240,7 +222,6 @@ $(function () {
 		});
 	}());
 
-	// ── Add Torrent Dialog ──────────────────────────────────────────────
 	(function () {
 		$("#add-torrent").click(function (e) {
 			e.preventDefault();
@@ -285,7 +266,6 @@ $(function () {
 		});
 	}());
 
-	// ── Sort & Filters ──────────────────────────────────────────────────
 	$(function () {
 		$("#sort").val(localStorage.sortColumn || "position");
 		$("#sort_invert").attr("checked", (localStorage.sortMethod == "desc"));
@@ -310,11 +290,9 @@ $(function () {
 		});
 	}());
 
-	// ── Status Checking (via messaging to background) ───────────────────
 	function checkStatus() {
 		chrome.runtime.sendMessage({ method: "check_status" }, function (response) {
 			if (chrome.runtime.lastError) {
-				// Background not ready yet, retry
 				setTimeout(checkStatus, 2000);
 				return;
 			}
@@ -352,7 +330,6 @@ $(function () {
 		$overlay.show();
 	}
 
-	// Listen for messages from background
 	chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 		debug_log(request.msg);
 		if (request.msg === "extension_activated") {
@@ -364,6 +341,5 @@ $(function () {
 		}
 	});
 
-	// Do initial check
 	checkStatus();
 });

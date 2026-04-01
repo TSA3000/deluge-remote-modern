@@ -1,7 +1,3 @@
-/*
- * Deluge API wrapper using fetch (MV3 compatible).
- * Maintains .success/.error aliases on returned promises for backward compat.
- */
 var Deluge = (function () {
 	var Deluge = {};
 
@@ -19,10 +15,6 @@ var Deluge = (function () {
 
 	Deluge.endpoint = function () { return endpoint(); };
 
-	/**
-	 * Make a JSON-RPC call to Deluge.
-	 * Returns a thenable with .success() and .error() aliases.
-	 */
 	Deluge.api = function (method, params, options) {
 		options = options || {};
 		var timeout = options.timeout || 10000;
@@ -47,13 +39,11 @@ var Deluge = (function () {
 		.then(function (json) {
 			if (json.error !== null) {
 				var err = json.error;
-				// Call error callbacks with signature matching old jQuery pattern
 				for (var i = 0; i < errorCbs.length; i++) {
 					errorCbs[i]({}, Deluge.API_ERROR, err);
 				}
 				throw { type: "api", code: err.code, message: err.message, _handled: true };
 			}
-			// Call success callbacks
 			for (var i = 0; i < successCbs.length; i++) {
 				successCbs[i](json.result, "success", {});
 			}
@@ -69,7 +59,6 @@ var Deluge = (function () {
 			throw err;
 		});
 
-		// Create a wrapper with .success/.error chaining
 		var wrapper = {
 			success: function (cb) {
 				successCbs.push(cb);
@@ -83,7 +72,6 @@ var Deluge = (function () {
 			catch: fetchPromise.catch.bind(fetchPromise)
 		};
 
-		// Also attach pre-passed callbacks from options
 		if (options.success) successCbs.push(options.success);
 		if (options.error)   errorCbs.push(options.error);
 
