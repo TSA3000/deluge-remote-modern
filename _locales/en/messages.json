@@ -1,6 +1,6 @@
 {
     "browser_title": {
-        "message": "Deluge - Torrent information in Chrome!",
+        "message": "Deluge Remote Modern - Torrent information in Chrome!",
         "description": "Title shown for browser icon when enabled."
     },
     "browser_title_disabled": {
@@ -20,5 +20,10 @@
      "loading_data": {
         "message": "Loading data...",
         "description": "Shown anywhere that has content being loaded."
+    },
+
+    "error_daemon_not_running": {
+        "message": "Deluge daemon does not appear to be running.",
+        "description": "Shown when the daemon is not running."
     }
 }

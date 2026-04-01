@@ -1,15 +1,25 @@
-# Remote Deluge
+# Deluge Remote Modern
+
+A modern, Manifest V3 fork of [Remote Deluge](https://github.com/YodaDaCoda/chrome-deluge-remote) by [YodaDaCoda](https://github.com/YodaDaCoda).
 
 Provides quick overview of torrent information in Chrome for the torrent client Deluge.
 
-## Request for help
+## What's different from the original?
 
-I develop this in my spare time, which is very limited. Pull requests will be gratefully accepted where possible.
+This fork modernizes the original extension which hasn't been updated since 2017:
+
+- **Manifest V3** — Required for continued Chrome support
+- **Dark Mode** — System, Light, and Dark themes
+- **jQuery 4.0** — Upgraded from 3.0.0
+- **HTTPS by default** — Default protocol changed to HTTPS
+- **Service Worker** — Background page replaced with MV3 service worker
+- **Native fetch()** — Replaced jQuery AJAX in background context
+
+## Credits
+
+This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/chrome-deluge-remote) originally created by [YodaDaCoda](https://github.com/YodaDaCoda). The original extension is licensed under the [MIT License](MIT-LICENSE). We are grateful for their work which this project builds upon.
 
 ## Screenshots
-
-### Original
-![](webstore/screenshot1.png)
 
 ### Dark Mode
 ![](webstore/screenshot1dark.png)
@@ -17,9 +27,13 @@ I develop this in my spare time, which is very limited. Pull requests will be gr
 ### Light Mode
 ![](webstore/screenshot1light.png)
 
+### Original Style
+![](webstore/screenshot1.png)
+
 ## Version History
 
 2026-04-01 v2.0.0
+* Forked from YodaDaCoda/chrome-deluge-remote v1.2.4
 * Migrated to Manifest V3 (service worker, fetch API, chrome.action)
 * Added dark mode support (System/Light/Dark)
 * Upgraded jQuery 3.0.0 → 4.0.0
@@ -30,6 +44,8 @@ I develop this in my spare time, which is very limited. Pull requests will be gr
 * New green active icon for clear connected state
 * Improved error handling throughout
 
+### Original Version History (by YodaDaCoda)
+
 2017-04-10 v1.2.4
 * Fix for Deluge v1.3.14
 
@@ -37,7 +53,7 @@ I develop this in my spare time, which is very limited. Pull requests will be gr
 * Fix bug for first-time users.
 
 2016-06-22 v1.2.2
-* Fix a couple niggling bugs and added a donate button. Please donate if you find my work useful! :)
+* Fix a couple niggling bugs and added a donate button.
 
 2016-01-27 v1.2.1
 * Fixed broken settings from v1.2.0
@@ -52,3 +68,7 @@ I develop this in my spare time, which is very limited. Pull requests will be gr
 
 2015-06-03 v1.0.0
 + Add an option to settings for a base path for reverse-proxied connections.
+
+## License
+
+MIT License — See [MIT-LICENSE](MIT-LICENSE) for details.
