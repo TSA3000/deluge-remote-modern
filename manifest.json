@@ -1,7 +1,7 @@
 {
 	"name": "Remote Deluge",
 	"description": "Provides a quick overview of torrent status for Deluge.",
-	"version": "1.2.4",
+	"version": "2.0.0",
 	"icons": {
 		"128": "images/icons/128.png",
 		"64": "images/icons/64.png",
@@ -9,22 +9,21 @@
 		"16": "images/icons/16.png"
 	},
 	"web_accessible_resources": [
-		"images/icons/16.png",
-		"images/icons/16_green.png"
+		{
+			"resources": [
+				"images/icons/16.png",
+				"images/icons/16_green.png"
+			],
+			"matches": ["<all_urls>"]
+		}
 	],
 	"default_locale": "en",
 	"background": {
-		"scripts": [
-			"js/libs/jquery-3.0.0.min.js",
-			"js/global_options.js",
-			"js/debug_log.js",
-			"js/deluge.js",
-			"js/background.js"
-		],
-		"persistent": true
+		"service_worker": "js/background.js",
+		"type": "module"
 	},
 	"options_page": "options.html",
-	"browser_action": {
+	"action": {
 		"default_icon": "images/icons/deluge.png",
 		"default_title": "__MSG_browser_title_disabled__",
 		"default_popup": "popup.html"
@@ -36,7 +35,7 @@
 				"https://*/*"
 			],
 			"js": [
-				"js/libs/jquery-3.0.0.min.js",
+				"js/libs/jquery-4.0.0.min.js",
 				"js/global_options.js",
 				"js/debug_log.js",
 				"js/add_torrent.js"
@@ -44,11 +43,13 @@
 		}
 	],
 	"permissions": [
-		 "tabs",
-		 "contextMenus",
-		 "storage",
-		 "http://*/*",
-		 "https://*/*"
+		"tabs",
+		"contextMenus",
+		"storage"
 	],
-	"manifest_version": 2
+	"host_permissions": [
+		"http://*/*",
+		"https://*/*"
+	],
+	"manifest_version": 3
 }

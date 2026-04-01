@@ -12,6 +12,17 @@ I develop this in my spare time, which is very limited. Pull requests will be gr
 
 ## Version History
 
+2026-04-01 v2.0.0
+* Migrated to Manifest V3 (service worker, fetch API, chrome.action)
+* Added dark mode support (System/Light/Dark)
+* Upgraded jQuery 3.0.0 → 4.0.0
+* Removed unused jquery_tablesorter.js
+* Default protocol changed to HTTPS
+* Handle .torrent and magnet links enabled by default
+* Fixed active icon (was JPEG disguised as PNG)
+* New green active icon for clear connected state
+* Improved error handling throughout
+
 2017-04-10 v1.2.4
 * Fix for Deluge v1.3.14
 
