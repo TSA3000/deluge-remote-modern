@@ -6,9 +6,16 @@ Provides quick overview of torrent information in Chrome for the torrent client 
 
 I develop this in my spare time, which is very limited. Pull requests will be gratefully accepted where possible.
 
-## Screenshot
+## Screenshots
 
+### Original
 ![](webstore/screenshot1.png)
+
+### Dark Mode
+![](webstore/screenshot1dark.png)
+
+### Light Mode
+![](webstore/screenshot1light.png)
 
 ## Version History
 
