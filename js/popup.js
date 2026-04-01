@@ -134,16 +134,14 @@ $(function () {
 									$("<td>").addClass("table_cell_ratio").html("Ratio: " + torrent.getRatio()),
 									$("<td>").addClass("table_cell_peers").html("Peers: " + torrent.num_peers + "/" + torrent.total_peers),
 									$("<td>").addClass("table_cell_seeds").html("Seeds: " + torrent.num_seeds + "/" + torrent.total_seeds),
+									$("<td>").addClass("table_cell_label").append(labelSelector(torrent)),
 									$("<td>").addClass("table_cell_speed").html(torrent.getSpeeds())
 								)),
 								$("<table>").append($("<tr>").append(
 									$("<td>").addClass("table_cell_progress").html(progressBar(torrent))
 								)),
 								$("<table>").append($("<tr>").append(
-									$("<td>").addClass("table_cell_actions").append(
-										labelSelector(torrent),
-										actionLinks(torrent)
-									)
+									$("<td>").addClass("table_cell_actions").append(actionLinks(torrent))
 								))
 							)
 						);

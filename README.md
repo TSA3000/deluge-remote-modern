@@ -12,6 +12,7 @@ Provides quick overview of torrent information in Chrome for the torrent client 
 This fork modernizes the original extension which hasn't been updated since 2017:
 
 - **Manifest V3** — Required for continued Chrome support
+- **Label Selector** — Change torrent labels directly from the popup
 - **Password Encryption** — AES-GCM password encryption for synced storage
 - **Dark Mode** — System, Light, and Dark themes
 - **jQuery 4.0** — Upgraded from 3.0.0
@@ -35,6 +36,11 @@ This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/c
 ![](webstore/screenshot1.png)
 
 ## Version History
+
+2026-04-01 v2.0.2
+* Added label selector dropdown on each torrent in the popup
+* Uses Deluge's `label.set_torrent` API (requires Label plugin enabled)
+* Fixed Error state progress bar color in dark mode
 
 2026-04-01 v2.0.1
 * Added AES-GCM password encryption for `chrome.storage.sync`

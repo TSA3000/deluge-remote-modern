@@ -216,6 +216,7 @@ html[data-theme="dark"] body {
 [data-theme="dark"] .table_cell_ratio,
 [data-theme="dark"] .table_cell_peers,
 [data-theme="dark"] .table_cell_seeds,
+[data-theme="dark"] .table_cell_label,
 [data-theme="dark"] .table_cell_speed {
 	color: var(--dm-text-secondary) !important;
 }
@@ -293,6 +294,27 @@ html[data-theme="dark"] body {
 
 [data-theme="dark"] #status-message {
 	color: var(--dm-success) !important;
+}
+
+/* ── Label Selector ──────────────────────────────────────────────────── */
+.table_cell_label {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.label_select {
+	font-size: 9px;
+	padding: 1px 2px;
+	vertical-align: middle;
+	max-width: 80px;
+	cursor: pointer;
+}
+
+[data-theme="dark"] .label_select {
+	background-color: var(--dm-input-bg) !important;
+	color: var(--dm-text-primary) !important;
+	border-color: var(--dm-input-border) !important;
+	border-radius: 3px;
 }
 
 [data-theme="dark"] table {
@@ -490,6 +512,7 @@ html[data-theme="dark"] body {
 	html:not([data-theme="light"]) .table_cell_ratio,
 	html:not([data-theme="light"]) .table_cell_peers,
 	html:not([data-theme="light"]) .table_cell_seeds,
+	html:not([data-theme="light"]) .table_cell_label,
 	html:not([data-theme="light"]) .table_cell_speed {
 		color: var(--dm-text-secondary) !important;
 	}
@@ -567,6 +590,13 @@ html[data-theme="dark"] body {
 
 	html:not([data-theme="light"]) #status-message {
 		color: var(--dm-success) !important;
+	}
+
+	html:not([data-theme="light"]) .label_select {
+		background-color: var(--dm-input-bg) !important;
+		color: var(--dm-text-primary) !important;
+		border-color: var(--dm-input-border) !important;
+		border-radius: 3px;
 	}
 
 	html:not([data-theme="light"]) table {
