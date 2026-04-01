@@ -37,6 +37,29 @@ $(function () {
 			);
 	}
 
+	function labelSelector(torrent) {
+		var labels = Torrents.getLabels();
+		var $select = $(document.createElement("select"))
+			.addClass("label_select")
+			.data("torrent-id", torrent.id);
+
+		// Add "No Label" option
+		$select.append($("<option>", { value: "", text: "(No Label)" }));
+
+		// Add available labels
+		for (var i = 0; i < labels.length; i++) {
+			$select.append($("<option>", {
+				value: labels[i],
+				text: labels[i]
+			}));
+		}
+
+		// Set current label
+		$select.val(torrent.label || "");
+
+		return $select;
+	}
+
 	function updateTableDelay(ms) {
 		setTimeout(updateTable, ms);
 	}
@@ -117,7 +140,10 @@ $(function () {
 									$("<td>").addClass("table_cell_progress").html(progressBar(torrent))
 								)),
 								$("<table>").append($("<tr>").append(
-									$("<td>").addClass("table_cell_actions").append(actionLinks(torrent))
+									$("<td>").addClass("table_cell_actions").append(
+										labelSelector(torrent),
+										actionLinks(torrent)
+									)
 								))
 							)
 						);
@@ -155,6 +181,26 @@ $(function () {
 					debug_log("Failed: " + method);
 				});
 		}
+
+		// Label change handler
+		$("#torrent_container").on("change", ".label_select", function () {
+			var $select = $(this);
+			var torrentId = $select.data("torrent-id");
+			var newLabel = $select.val();
+
+			debug_log("Setting label for " + torrentId + " to: " + newLabel);
+
+			Deluge.api("label.set_torrent", [torrentId, newLabel])
+				.success(function () {
+					debug_log("Label set successfully");
+					updateTableDelay(500);
+				})
+				.error(function () {
+					debug_log("Failed to set label (label plugin may not be enabled)");
+					// Reset to previous value
+					updateTableDelay(250);
+				});
+		});
 
 		$("#torrent_container").on("click", ".main_actions *", function () {
 			var rowData = getRowData(this);

@@ -6,6 +6,7 @@ var Torrents = (function ($) {
 		// Stores all torrent data, using array so it can be sorted.
 	var torrents = [];
 	var globalInformation = {};
+	var availableLabels = [];
 
 	pub.getAll = function () {
 		return torrents;
@@ -30,6 +31,10 @@ var Torrents = (function ($) {
 
 	pub.getGlobalInformation = function () {
 		return globalInformation;
+	};
+
+	pub.getLabels = function () {
+		return availableLabels;
 	};
 
 	pub.cleanup = function () {
@@ -86,6 +91,17 @@ var Torrents = (function ($) {
 					if (response.filters.state.hasOwnProperty(id)) {
 						tmp = response.filters.state[id];
 						globalInformation[tmp[0].toLowerCase()] = tmp[1];
+					}
+				}
+
+				// Extract available label names (exclude "All" and empty)
+				availableLabels = [];
+				if (response.filters.label) {
+					for (var i = 0; i < response.filters.label.length; i++) {
+						var labelName = response.filters.label[i][0];
+						if (labelName !== "All" && labelName !== "") {
+							availableLabels.push(labelName);
+						}
 					}
 				}
 
