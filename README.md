@@ -1,5 +1,8 @@
 # Deluge Remote Modern
 
+[![GitHub release](https://img.shields.io/github/release/TSA3000/deluge-remote-modern.svg)](https://github.com/TSA3000/deluge-remote-modern/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](MIT-LICENSE)
+
 A modern, Manifest V3 fork of [Remote Deluge](https://github.com/YodaDaCoda/chrome-deluge-remote) by [YodaDaCoda](https://github.com/YodaDaCoda).
 
 Provides quick overview of torrent information in Chrome for the torrent client Deluge.
@@ -9,6 +12,7 @@ Provides quick overview of torrent information in Chrome for the torrent client 
 This fork modernizes the original extension which hasn't been updated since 2017:
 
 - **Manifest V3** — Required for continued Chrome support
+- **Password Encryption** — AES-GCM password encryption for synced storage
 - **Dark Mode** — System, Light, and Dark themes
 - **jQuery 4.0** — Upgraded from 3.0.0
 - **HTTPS by default** — Default protocol changed to HTTPS
@@ -31,6 +35,11 @@ This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/c
 ![](webstore/screenshot1.png)
 
 ## Version History
+
+2026-04-01 v2.0.1
+* Added AES-GCM password encryption for `chrome.storage.sync`
+* Added dynamic local AES-256 key generation
+* Added backward compatibility/auto-upgrade for plain text passwords
 
 2026-04-01 v2.0.0
 * Forked from YodaDaCoda/chrome-deluge-remote v1.2.4
