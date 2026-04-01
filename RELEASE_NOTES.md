@@ -1,3 +1,18 @@
+# Remote Deluge v2.0.1 Release Notes
+
+**Release Date:** 2026-04-01
+
+---
+
+## Password Encryption (AES-GCM)
+
+- **Secure Setup:** A random AES-256 key is generated on first load and stored in `chrome.storage.local` (local only, never syncs to the cloud).
+- **Encrypted Storage:** Passwords are now encrypted with AES-GCM before being saved to `chrome.storage.sync`.
+- **On-the-fly Decryption:** The background script automatically decrypts the password in memory when logging into the Deluge server.
+- **Backward Compatibility:** Old plain text passwords are automatically detected and will continue to work. They are automatically encrypted the next time you save your settings.
+
+---
+
 # Remote Deluge v2.0.0 Release Notes
 
 **Release Date:** 2026-04-01
