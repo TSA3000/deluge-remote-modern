@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	var globalSeeding = document.querySelector("#global-information .seeding");
 	var globalQueued = document.querySelector("#global-information .queued");
 
-	var REFRESH_INTERVAL = 30000;
+	var REFRESH_INTERVAL = 1000;
 	var refreshTimer = Timer(REFRESH_INTERVAL);
 
 	// Pre-built label options HTML (rebuilt only when labels change)
