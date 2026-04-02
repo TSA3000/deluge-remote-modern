@@ -1,5 +1,8 @@
 # Deluge Remote Modern
 
+[![GitHub release](https://img.shields.io/github/release/TSA3000/deluge-remote-modern.svg)](https://github.com/TSA3000/deluge-remote-modern/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](MIT-LICENSE)
+
 A modern, Manifest V3 fork of [Remote Deluge](https://github.com/YodaDaCoda/chrome-deluge-remote) by [YodaDaCoda](https://github.com/YodaDaCoda).
 
 Provides quick overview of torrent information in Chrome for the torrent client Deluge.
@@ -9,8 +12,10 @@ Provides quick overview of torrent information in Chrome for the torrent client 
 This fork modernizes the original extension which hasn't been updated since 2017:
 
 - **Manifest V3** — Required for continued Chrome support
+- **Label Selector** — Change torrent labels directly from the popup
+- **Password Encryption** — AES-GCM password encryption for synced storage
 - **Dark Mode** — System, Light, and Dark themes
-- **jQuery 4.0** — Upgraded from 3.0.0
+- **Vanilla JS** — jQuery removed entirely for a much lighter, faster extension (saved ~77KB)
 - **HTTPS by default** — Default protocol changed to HTTPS
 - **Service Worker** — Background page replaced with MV3 service worker
 - **Native fetch()** — Replaced jQuery AJAX in background context
@@ -31,6 +36,21 @@ This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/c
 ![](webstore/screenshot1.png)
 
 ## Version History
+
+2026-04-02 v2.1.0
+* Completely removed jQuery dependency for a lighter footprint (saved ~77KB)
+* Replaced heavy jQuery methods with a lightweight custom `dom_helper.js`
+* Rewrote popup, options, torrents, and add_torrent logic in native Vanilla JS
+
+2026-04-01 v2.0.2
+* Added label selector dropdown on each torrent in the popup
+* Uses Deluge's `label.set_torrent` API (requires Label plugin enabled)
+* Fixed Error state progress bar color in dark mode
+
+2026-04-01 v2.0.1
+* Added AES-GCM password encryption for `chrome.storage.sync`
+* Added dynamic local AES-256 key generation
+* Added backward compatibility/auto-upgrade for plain text passwords
 
 2026-04-01 v2.0.0
 * Forked from YodaDaCoda/chrome-deluge-remote v1.2.4
