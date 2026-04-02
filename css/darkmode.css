@@ -262,7 +262,7 @@ html[data-theme="dark"] body {
 	border-color: var(--dm-progress-error) !important;
 }
 
-[data-theme="dark"] .progress_bar .inner.finished:not(.Error) {
+[data-theme="dark"] .progress_bar .inner.finished:not(.Error):not(.Paused) {
 	background: var(--dm-progress-finished) !important;
 	border-color: var(--dm-progress-finished) !important;
 }
@@ -558,7 +558,7 @@ html[data-theme="dark"] body {
 		border-color: var(--dm-progress-error) !important;
 	}
 
-	html:not([data-theme="light"]) .progress_bar .inner.finished:not(.Error) {
+	html:not([data-theme="light"]) .progress_bar .inner.finished:not(.Error):not(.Paused) {
 		background: var(--dm-progress-finished) !important;
 		border-color: var(--dm-progress-finished) !important;
 	}
