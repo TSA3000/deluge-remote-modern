@@ -1,22 +1,20 @@
-$(function () {
+document.addEventListener("DOMContentLoaded", function () {
 	var extensionActivated = false;
-	var $overlay = $("#overlay").css({ height: $(document).height() });
+	var overlay = document.getElementById("overlay");
+	overlay.style.height = document.documentElement.scrollHeight + "px";
 
-	// Cache selectors used on every render
-	var $torrentContainer = $("#torrent_container");
-	var containerEl = $torrentContainer[0];
-	var $globalInfo = $("#global-information");
-	var $gAll = $(".all", $globalInfo);
-	var $gDown = $(".downloading", $globalInfo);
-	var $gPaused = $(".paused", $globalInfo);
-	var $gSeed = $(".seeding", $globalInfo);
-	var $gQueued = $(".queued", $globalInfo);
+	var torrentContainer = document.getElementById("torrent_container");
+	var globalAll = document.querySelector("#global-information .all");
+	var globalDownloading = document.querySelector("#global-information .downloading");
+	var globalPaused = document.querySelector("#global-information .paused");
+	var globalSeeding = document.querySelector("#global-information .seeding");
+	var globalQueued = document.querySelector("#global-information .queued");
 
-	const REFRESH_INTERVAL = 30000;
+	var REFRESH_INTERVAL = 30000;
 	var refreshTimer = Timer(REFRESH_INTERVAL);
 
-	// Label options cache — rebuilt only when labels change
-	var cachedLabelHtml = '<option value="">(No Label)</option>';
+	// Pre-built label options HTML (rebuilt only when labels change)
+	var cachedLabelOptionsHtml = '<option value="">(No Label)</option>';
 	var lastLabelHash = "";
 
 	function rebuildLabelOptions() {
@@ -24,41 +22,38 @@ $(function () {
 		var hash = labels.join("|");
 		if (hash === lastLabelHash) return;
 		lastLabelHash = hash;
+
 		var parts = ['<option value="">(No Label)</option>'];
 		for (var i = 0; i < labels.length; i++) {
 			parts.push('<option value="' + labels[i] + '">' + labels[i] + '</option>');
 		}
-		cachedLabelHtml = parts.join("");
+		cachedLabelOptionsHtml = parts.join("");
 	}
 
-	/*
-	 * Build torrent row as HTML string.
-	 * ~5-10x faster than jQuery element creation for large lists.
-	 */
-	function buildRowHtml(t) {
-		var state = t.state === "Paused" ? "resume" : "pause";
-		var managed = t.autoManaged ? "managed" : "unmanaged";
-		var finished = t.is_finished ? " finished" : "";
-		var size = (t.progress != 100 ? t.getHumanDownloadedSize() + " of " : "") + t.getHumanSize();
+	function buildRowHtml(torrent) {
+		var state = torrent.state === "Paused" ? "resume" : "pause";
+		var managed = torrent.autoManaged ? "managed" : "unmanaged";
+		var finishedClass = torrent.is_finished ? " finished" : "";
+		var sizeText = (torrent.progress != 100 ? torrent.getHumanDownloadedSize() + " of " : "") + torrent.getHumanSize();
 
-		return '<div class="torrent_row" data-id="' + t.id + '">' +
+		return '<div class="torrent_row" data-id="' + torrent.id + '">' +
 			'<table><tr>' +
-				'<td class="table_cell_position">' + t.getPosition() + '</td>' +
-				'<td class="table_cell_name">' + t.name + '</td>' +
+				'<td class="table_cell_position">' + torrent.getPosition() + '</td>' +
+				'<td class="table_cell_name">' + torrent.name + '</td>' +
 			'</tr></table>' +
 			'<table><tr>' +
-				'<td class="table_cell_size">' + size + '</td>' +
-				'<td class="table_cell_eta">ETA: ' + t.getEta() + '</td>' +
-				'<td class="table_cell_ratio">Ratio: ' + t.getRatio() + '</td>' +
-				'<td class="table_cell_peers">Peers: ' + t.num_peers + '/' + t.total_peers + '</td>' +
-				'<td class="table_cell_seeds">Seeds: ' + t.num_seeds + '/' + t.total_seeds + '</td>' +
-				'<td class="table_cell_label"><select class="label_select" data-torrent-id="' + t.id + '">' + cachedLabelHtml + '</select></td>' +
-				'<td class="table_cell_speed">' + t.getSpeeds() + '</td>' +
+				'<td class="table_cell_size">' + sizeText + '</td>' +
+				'<td class="table_cell_eta">ETA: ' + torrent.getEta() + '</td>' +
+				'<td class="table_cell_ratio">Ratio: ' + torrent.getRatio() + '</td>' +
+				'<td class="table_cell_peers">Peers: ' + torrent.num_peers + '/' + torrent.total_peers + '</td>' +
+				'<td class="table_cell_seeds">Seeds: ' + torrent.num_seeds + '/' + torrent.total_seeds + '</td>' +
+				'<td class="table_cell_label"><select class="label_select" data-torrent-id="' + torrent.id + '">' + cachedLabelOptionsHtml + '</select></td>' +
+				'<td class="table_cell_speed">' + torrent.getSpeeds() + '</td>' +
 			'</tr></table>' +
 			'<table><tr><td class="table_cell_progress">' +
 				'<div class="progress_bar">' +
-					'<div class="inner ' + t.state + finished + '" style="width:' + t.getPercent() + '"></div>' +
-					'<span>' + t.getPercent() + ' - ' + t.state + '</span>' +
+					'<div class="inner ' + torrent.state + finishedClass + '" style="width:' + torrent.getPercent() + '"></div>' +
+					'<span>' + torrent.getPercent() + ' - ' + torrent.state + '</span>' +
 				'</div>' +
 			'</td></tr></table>' +
 			'<table><tr><td class="table_cell_actions">' +
@@ -102,198 +97,226 @@ $(function () {
 
 	function renderGlobalInformation() {
 		var info = Torrents.getGlobalInformation();
-		$gAll.html(info.all);
-		$gDown.html(info.downloading);
-		$gPaused.html(info.paused);
-		$gSeed.html(info.seeding);
-		$gQueued.html(info.queued);
+		globalAll.textContent = info.all;
+		globalDownloading.textContent = info.downloading;
+		globalPaused.textContent = info.paused;
+		globalSeeding.textContent = info.seeding;
+		globalQueued.textContent = info.queued;
 	}
 
 	function renderTable() {
-		$("#deluge_webui_link").attr("href", Deluge.endpoint());
+		var link = document.getElementById("deluge_webui_link");
+		if (link) link.href = Deluge.endpoint();
+
 		rebuildLabelOptions();
 
-		// Read filters once before loop
-		var fState = $("#filter_state").val();
-		var fTracker = $("#filter_tracker_host").val();
-		var fLabel = $("#filter_label").val();
+		var filterState = document.getElementById("filter_state");
+		var filterTracker = document.getElementById("filter_tracker_host");
+		var filterLabel = document.getElementById("filter_label");
+		var fState = filterState ? filterState.value : "All";
+		var fTracker = filterTracker ? filterTracker.value : "All";
+		var fLabel = filterLabel ? filterLabel.value : "All";
 
 		var torrents = Torrents.sort(localStorage.sortColumn || "position").getAll();
 		if (localStorage.sortMethod === "desc") {
 			torrents.reverse();
 		}
 
-		// Build all HTML in one pass
 		var htmlParts = [];
 		var labelValues = [];
 
 		for (var i = 0, len = torrents.length; i < len; i++) {
-			var t = torrents[i];
+			var torrent = torrents[i];
 
-			// Filter with early continue (avoids deep nesting)
-			if (fState !== "All" && fState !== t.state) {
-				if (!(fState === "Active" && (t.speedDownload > 0 || t.speedUpload > 0))) continue;
+			if (fState !== "All" && fState !== torrent.state) {
+				if (!(fState === "Active" && (torrent.speedDownload > 0 || torrent.speedUpload > 0))) {
+					continue;
+				}
 			}
-			if (fTracker !== "All" && fTracker !== t.tracker_host) {
-				if (!(fTracker === "Error" && t.tracker_status.indexOf("Error") > -1)) continue;
+			if (fTracker !== "All" && fTracker !== torrent.tracker_host) {
+				if (!(fTracker === "Error" && torrent.tracker_status.indexOf("Error") > -1)) {
+					continue;
+				}
 			}
-			if (fLabel !== "All" && fLabel !== t.label) continue;
+			if (fLabel !== "All" && fLabel !== torrent.label) {
+				continue;
+			}
 
-			htmlParts.push(buildRowHtml(t));
-			labelValues.push({ id: t.id, label: t.label || "" });
+			htmlParts.push(buildRowHtml(torrent));
+			labelValues.push({ id: torrent.id, label: torrent.label || "" });
 		}
 
-		// Single DOM write
-		containerEl.innerHTML = htmlParts.join("");
+		torrentContainer.innerHTML = htmlParts.join("");
 
-		// Set label dropdown values
 		for (var j = 0, jlen = labelValues.length; j < jlen; j++) {
-			var sel = containerEl.querySelector('.label_select[data-torrent-id="' + labelValues[j].id + '"]');
+			var sel = torrentContainer.querySelector('.label_select[data-torrent-id="' + labelValues[j].id + '"]');
 			if (sel) sel.value = labelValues[j].label;
 		}
 	}
 
-	// ── Event Handlers (delegated, set up once) ─────────────────────────
-	(function () {
-		function getRowData(el) {
-			var row = el.closest(".torrent_row");
-			var id = row ? row.getAttribute("data-id") : null;
-			return { torrentId: id, torrent: Torrents.getById(id) };
+	// ── Event Handlers (delegated) ──────────────────────────────────────
+	function getRowData(element) {
+		var row = element.closest(".torrent_row");
+		if (!row) return null;
+		var torrentId = row.getAttribute("data-id");
+		return { torrentId: torrentId, torrent: Torrents.getById(torrentId) };
+	}
+
+	function DelugeMethod(method, torrent, rmdata) {
+		pauseTableRefresh();
+		var actions;
+		if (method === "core.set_torrent_auto_managed") {
+			actions = [torrent.id, !torrent.autoManaged];
+		} else if (method === "core.remove_torrent") {
+			actions = [torrent.id, rmdata];
+		} else {
+			actions = [[torrent.id]];
 		}
 
-		function DelugeMethod(method, torrent, rmdata) {
-			pauseTableRefresh();
-			var actions;
-			if (method === "core.set_torrent_auto_managed") {
-				actions = [torrent.id, !torrent.autoManaged];
-			} else if (method === "core.remove_torrent") {
-				actions = [torrent.id, rmdata];
-			} else {
-				actions = [[torrent.id]];
-			}
-
-			Deluge.api(method, actions)
-				.success(function () {
-					debug_log("Success: " + method);
-					updateTableDelay(250);
-				})
-				.error(function () {
-					debug_log("Failed: " + method);
-				});
-		}
-
-		// Label change
-		$torrentContainer.on("change", ".label_select", function () {
-			var torrentId = this.getAttribute("data-torrent-id");
-			var newLabel = this.value;
-
-			Deluge.api("label.set_torrent", [torrentId, newLabel])
-				.success(function () {
-					debug_log("Label set successfully");
-					updateTableDelay(500);
-				})
-				.error(function () {
-					debug_log("Failed to set label");
-					updateTableDelay(250);
-				});
-		});
-
-		// Action buttons (native classList, faster than jQuery .hasClass)
-		$torrentContainer.on("click", ".main_actions a", function () {
-			if (this.classList.contains("delete")) return;
-
-			var rowData = getRowData(this);
-			if (!rowData.torrent) return;
-
-			var method, rmdata = false;
-
-			if (this.classList.contains("state")) {
-				method = rowData.torrent.state === "Paused" ? "core.resume_torrent" : "core.pause_torrent";
-			} else if (this.classList.contains("move_up")) {
-				method = "core.queue_up";
-			} else if (this.classList.contains("move_down")) {
-				method = "core.queue_down";
-			} else if (this.classList.contains("toggle_managed")) {
-				method = "core.set_torrent_auto_managed";
-			} else if (this.classList.contains("force_recheck")) {
-				method = "core.force_recheck";
-			} else if (this.classList.contains("rm_torrent_data")) {
-				method = "core.remove_torrent";
-				rmdata = true;
-			} else if (this.classList.contains("rm_torrent")) {
-				method = "core.remove_torrent";
-			} else {
-				return;
-			}
-			DelugeMethod(method, rowData.torrent, rmdata);
-		});
-
-		// Delete — show options
-		$torrentContainer.on("click", ".main_actions .delete", function () {
-			pauseTableRefresh();
-			var $td = $(this).closest("td");
-			$td.find(".main_actions").fadeOut(function () {
-				$td.append(
-					'<div class="delete-options">' +
-						'<a class="rm_cancel" title="Cancel"></a>' +
-						'<a class="rm_torrent_data" title="Delete with data"></a>' +
-						'<a class="rm_torrent" title="Remove torrent only"></a>' +
-					'</div>'
-				).hide().fadeIn();
+		Deluge.api(method, actions)
+			.success(function () {
+				debug_log("Success: " + method);
+				updateTableDelay(250);
+			})
+			.error(function () {
+				debug_log("Failed: " + method);
 			});
+	}
+
+	// Label change
+	DomHelper.on(torrentContainer, "change", ".label_select", function () {
+		var torrentId = this.getAttribute("data-torrent-id");
+		var newLabel = this.value;
+
+		Deluge.api("label.set_torrent", [torrentId, newLabel])
+			.success(function () {
+				debug_log("Label set successfully");
+				updateTableDelay(500);
+			})
+			.error(function () {
+				debug_log("Failed to set label");
+				updateTableDelay(250);
+			});
+	});
+
+	// Action buttons
+	DomHelper.on(torrentContainer, "click", ".main_actions a", function () {
+		if (this.classList.contains("delete")) return;
+
+		var rowData = getRowData(this);
+		if (!rowData || !rowData.torrent) return;
+
+		var method, rmdata = false;
+
+		if (this.classList.contains("state")) {
+			method = rowData.torrent.state === "Paused" ? "core.resume_torrent" : "core.pause_torrent";
+		} else if (this.classList.contains("move_up")) {
+			method = "core.queue_up";
+		} else if (this.classList.contains("move_down")) {
+			method = "core.queue_down";
+		} else if (this.classList.contains("toggle_managed")) {
+			method = "core.set_torrent_auto_managed";
+		} else if (this.classList.contains("force_recheck")) {
+			method = "core.force_recheck";
+		} else if (this.classList.contains("rm_torrent_data")) {
+			method = "core.remove_torrent";
+			rmdata = true;
+		} else if (this.classList.contains("rm_torrent")) {
+			method = "core.remove_torrent";
+		} else {
+			return;
+		}
+		DelugeMethod(method, rowData.torrent, rmdata);
+	});
+
+	// Delete button — show options
+	DomHelper.on(torrentContainer, "click", ".main_actions .delete", function () {
+		pauseTableRefresh();
+		var td = this.closest("td");
+		var actions = td.querySelector(".main_actions");
+
+		DomHelper.fadeOut(actions, 200, function () {
+			var div = document.createElement("div");
+			div.className = "delete-options";
+			div.innerHTML =
+				'<a class="rm_cancel" title="Cancel"></a>' +
+				'<a class="rm_torrent_data" title="Delete with data"></a>' +
+				'<a class="rm_torrent" title="Remove torrent only"></a>';
+			td.appendChild(div);
+			DomHelper.hide(td);
+			DomHelper.fadeIn(td, 200);
 		});
+	});
 
-		// Delete option clicks
-		$torrentContainer.on("click", ".delete-options a", function () {
-			var torrent = getRowData(this).torrent;
+	// Delete option clicks
+	DomHelper.on(torrentContainer, "click", ".delete-options a", function (e) {
+		e.preventDefault();
+		var rowData = getRowData(this);
+		if (!rowData) return;
 
-			function removeButtons() {
-				$(".delete-options").fadeOut(function () {
-					resumeTableRefresh();
-					$(this).closest("td").find(".main_actions").fadeIn(function () {
+		if (this.classList.contains("rm_torrent")) {
+			DelugeMethod("core.remove_torrent", rowData.torrent, false);
+		} else if (this.classList.contains("rm_torrent_data")) {
+			DelugeMethod("core.remove_torrent", rowData.torrent, true);
+		}
+
+		// Remove delete options and show actions again
+		var td = this.closest("td");
+		var deleteOpts = td.querySelector(".delete-options");
+		if (deleteOpts) {
+			DomHelper.fadeOut(deleteOpts, 200, function () {
+				deleteOpts.remove();
+				var actions = td.querySelector(".main_actions");
+				if (actions) {
+					DomHelper.fadeIn(actions, 200, function () {
+						resumeTableRefresh();
 						updateTable();
 					});
-				});
-			}
-
-			if (this.classList.contains("rm_torrent")) {
-				DelugeMethod("core.remove_torrent", torrent, false);
-			} else if (this.classList.contains("rm_torrent_data")) {
-				DelugeMethod("core.remove_torrent", torrent, true);
-			}
-
-			removeButtons();
-			return false;
-		});
-	}());
+				}
+			});
+		}
+	});
 
 	// ── Add Torrent Dialog ──────────────────────────────────────────────
 	(function () {
-		var $dialog = $("#add-torrent-dialog");
-		var $inputBox = $("#manual_add_input");
-		var $addButton = $("#manual_add_button");
+		var dialog = document.getElementById("add-torrent-dialog");
+		var inputBox = document.getElementById("manual_add_input");
+		var addButton = document.getElementById("manual_add_button");
+		var addTorrentLink = document.getElementById("add-torrent");
 
-		$("#add-torrent").click(function (e) {
+		addTorrentLink.addEventListener("click", function (e) {
 			e.preventDefault();
-			$dialog.show();
+			DomHelper.show(dialog);
 		});
 
-		$dialog.click(function () { $dialog.hide(); });
-		$dialog.find(".inner").click(function (e) { e.stopPropagation(); });
-		$dialog.find(".close").click(function (e) { e.preventDefault(); $dialog.hide(); });
+		dialog.addEventListener("click", function () {
+			DomHelper.hide(dialog);
+		});
 
-		setTimeout(function () { $("#add-torrent").blur(); }, 50);
+		dialog.querySelector(".inner").addEventListener("click", function (e) {
+			e.stopPropagation();
+		});
 
-		$inputBox.keydown(function (event) {
-			if (event.keyCode === 13) {
-				event.preventDefault();
-				$addButton.click();
+		var closeBtn = dialog.querySelector(".close");
+		if (closeBtn) {
+			closeBtn.addEventListener("click", function (e) {
+				e.preventDefault();
+				DomHelper.hide(dialog);
+			});
+		}
+
+		setTimeout(function () { addTorrentLink.blur(); }, 50);
+
+		inputBox.addEventListener("keydown", function (e) {
+			if (e.keyCode === 13) {
+				e.preventDefault();
+				addButton.click();
 			}
 		});
 
-		$addButton.on("click", function (e) {
+		addButton.addEventListener("click", function (e) {
 			e.preventDefault();
-			var url = $inputBox.val();
+			var url = inputBox.value;
 
 			if (/\/(download|get)\//.test(url) || /\.torrent$/.test(url)) {
 				chrome.runtime.sendMessage({ method: "add_torrent_from_url", url: url });
@@ -301,32 +324,43 @@ $(function () {
 				chrome.runtime.sendMessage({ method: "add_torrent_from_magnet", url: url });
 			}
 
-			$inputBox.val("");
-			$dialog.hide();
+			inputBox.value = "";
+			DomHelper.hide(dialog);
 		});
 	}());
 
 	// ── Sort & Filters ──────────────────────────────────────────────────
 	(function () {
-		$("#sort").val(localStorage.sortColumn || "position");
-		$("#sort_invert").attr("checked", (localStorage.sortMethod === "desc"));
-		$("#filter_state").val(localStorage["filter_state"] || "All");
-		$("#filter_tracker_host").val(localStorage["filter_tracker_host"] || "All");
-		$("#filter_label").val(localStorage["filter_label"] || "All");
+		var sortEl = document.getElementById("sort");
+		var sortInvert = document.getElementById("sort_invert");
+		var filterState = document.getElementById("filter_state");
+		var filterTracker = document.getElementById("filter_tracker_host");
+		var filterLabel = document.getElementById("filter_label");
 
-		$("#sort").on("change", function () {
+		sortEl.value = localStorage.sortColumn || "position";
+		sortInvert.checked = (localStorage.sortMethod === "desc");
+
+		if (filterState) filterState.value = localStorage["filter_state"] || "All";
+		if (filterTracker) filterTracker.value = localStorage["filter_tracker_host"] || "All";
+		if (filterLabel) filterLabel.value = localStorage["filter_label"] || "All";
+
+		sortEl.addEventListener("change", function () {
 			localStorage.sortColumn = this.value;
 			renderTable();
 		});
 
-		$("#sort_invert").on("change", function () {
+		sortInvert.addEventListener("change", function () {
 			localStorage.sortMethod = this.checked ? "desc" : "asc";
 			renderTable();
 		});
 
-		$("#filter_state, #filter_tracker_host, #filter_label").on("change", function () {
-			localStorage[this.id] = this.value;
-			renderTable();
+		[filterState, filterTracker, filterLabel].forEach(function (el) {
+			if (el) {
+				el.addEventListener("change", function () {
+					localStorage[this.id] = this.value;
+					renderTable();
+				});
+			}
 		});
 	}());
 
@@ -340,11 +374,15 @@ $(function () {
 			if (response && response.connected) {
 				activated();
 			} else if (response) {
-				var msg = (response.reason === "auth_failed")
+				var message = (response.reason === "auth_failed")
 					? chrome.i18n.getMessage("error_unauthenticated")
 					: chrome.i18n.getMessage("error_generic");
-				$("span", $overlay).removeClass().addClass("error").html(msg);
-				$overlay.show();
+				var span = overlay.querySelector(".overlay_inner span");
+				if (span) {
+					span.className = "error";
+					span.innerHTML = message;
+				}
+				DomHelper.show(overlay);
 			}
 		});
 	}
@@ -352,7 +390,7 @@ $(function () {
 	function activated() {
 		if (!extensionActivated) {
 			extensionActivated = true;
-			$overlay.hide();
+			DomHelper.hide(overlay);
 			updateTable();
 		}
 	}
@@ -362,10 +400,12 @@ $(function () {
 	}
 
 	function autoLoginFailed() {
-		$("span", $overlay).addClass("error").html(
-			chrome.i18n.getMessage("error_unauthenticated")
-		);
-		$overlay.show();
+		var span = overlay.querySelector(".overlay_inner span");
+		if (span) {
+			span.classList.add("error");
+			span.innerHTML = chrome.i18n.getMessage("error_unauthenticated");
+		}
+		DomHelper.show(overlay);
 	}
 
 	chrome.runtime.onMessage.addListener(function (request) {

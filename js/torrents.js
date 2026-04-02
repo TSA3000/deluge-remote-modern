@@ -1,10 +1,10 @@
 /*
  * Module responsible for fetching, storing and sorting torrent objects.
  */
-var Torrents = (function ($) {
+var Torrents = (function () {
 	var pub = {};
 	var torrents = [];
-	var torrentMap = {};  // O(1) lookup by ID
+	var torrentMap = {};
 	var globalInformation = {};
 	var availableLabels = [];
 
@@ -47,15 +47,15 @@ var Torrents = (function ($) {
 			{ timeout: 2000 }
 		)
 		.success(function (response) {
-			var id, tmp, t;
+			var id, tmp, torrent;
 
 			that.cleanup();
 
 			for (id in response.torrents) {
 				if (response.torrents.hasOwnProperty(id)) {
-					t = new Torrent(id, response.torrents[id]);
-					torrents.push(t);
-					torrentMap[id] = t;
+					torrent = new Torrent(id, response.torrents[id]);
+					torrents.push(torrent);
+					torrentMap[id] = torrent;
 				}
 			}
 
@@ -66,7 +66,6 @@ var Torrents = (function ($) {
 				}
 			}
 
-			// Extract available labels
 			availableLabels = [];
 			if (response.filters.label) {
 				for (var i = 0, len = response.filters.label.length; i < len; i++) {
@@ -79,15 +78,21 @@ var Torrents = (function ($) {
 
 			for (id in response.filters) {
 				if (response.filters.hasOwnProperty(id)) {
-					var $filter = $("#filter_" + id);
-					$filter.empty();
-					for (var j = 0, jlen = response.filters[id].length; j < jlen; j++) {
-						var text = response.filters[id][j][0];
+					var filterEl = document.getElementById("filter_" + id);
+					if (!filterEl) continue;
+
+					var options = response.filters[id];
+					var html = "";
+
+					for (var j = 0, jlen = options.length; j < jlen; j++) {
+						var text = options[j][0];
 						text = (text === "" ? "<blank>" : text);
-						text += " (" + response.filters[id][j][1] + ")";
-						$filter.append('<option value="' + response.filters[id][j][0] + '">' + text + '</option>');
+						text += " (" + options[j][1] + ")";
+						html += '<option value="' + options[j][0] + '">' + text + '</option>';
 					}
-					$filter.val(localStorage["filter_" + id] || "All");
+
+					filterEl.innerHTML = html;
+					filterEl.value = localStorage["filter_" + id] || "All";
 				}
 			}
 
@@ -99,24 +104,27 @@ var Torrents = (function ($) {
 	};
 
 	return pub;
-}(jQuery));
+}());
 
-// Sort array of objects by parameter
 Array.prototype.sortByParameter = function (sortParameter, invert) {
-	invert = (typeof invert === "boolean") ? invert : false;
-
-	this.sort(function (a, b) {
+	invert = (typeof invert === "undefined" || typeof invert !== "boolean") ? false : invert;
+	function compare(a, b) {
 		var left, right;
-		if (sortParameter === "position") {
-			left = (a.position === -1) ? 999 : a.position;
-			right = (b.position === -1) ? 999 : b.position;
-		} else {
-			left = a[sortParameter];
-			right = b[sortParameter];
+		switch (sortParameter) {
+			case "position":
+				left = (a.position === -1) ? 999 : a.position;
+				right = (b.position === -1) ? 999 : b.position;
+				break;
+			default:
+				left = a[sortParameter];
+				right = b[sortParameter];
+				break;
 		}
-		return (left < right) ? -1 : (left > right) ? 1 : 0;
-	});
-
+		if (left < right) return -1;
+		if (left > right) return 1;
+		return 0;
+	}
+	this.sort(compare);
 	if (invert) this.reverse();
 	return this;
 };

@@ -1,21 +1,20 @@
 function saveOptions() {
-	var plainPassword = $("#password").val();
+	var plainPassword = document.getElementById("password").value;
 
-	// Encrypt password before saving
 	PasswordCrypto.encrypt(plainPassword).then(function (encryptedPassword) {
 		chrome.storage.sync.set(
 			{
-				"address_protocol":   $("#address_protocol").val(),
-				"address_ip":         $("#address_ip").val(),
-				"address_port":       $("#address_port").val(),
-				"address_base":       $("#address_base").val(),
+				"address_protocol":   document.getElementById("address_protocol").value,
+				"address_ip":         document.getElementById("address_ip").value,
+				"address_port":       document.getElementById("address_port").value,
+				"address_base":       document.getElementById("address_base").value,
 				"password":           encryptedPassword,
-				"handle_torrents":    $("#handle_torrents").is(":checked"),
-				"handle_magnets":     $("#handle_magnets").is(":checked"),
-				"context_menu":       $("#context_menu").is(":checked"),
-				"badge_timeout":      parseInt($("#badge_timeout").val()),
-				"debug_mode":         $("#debug_mode").is(":checked"),
-				"dark_mode":          $("#dark_mode").val(),
+				"handle_torrents":    document.getElementById("handle_torrents").checked,
+				"handle_magnets":     document.getElementById("handle_magnets").checked,
+				"context_menu":       document.getElementById("context_menu").checked,
+				"badge_timeout":      parseInt(document.getElementById("badge_timeout").value),
+				"debug_mode":         document.getElementById("debug_mode").checked,
+				"dark_mode":          document.getElementById("dark_mode").value,
 				"version":            chrome.runtime.getManifest().version
 			},
 			function () {
@@ -24,49 +23,48 @@ function saveOptions() {
 		);
 	}).catch(function (err) {
 		console.error("Failed to encrypt password:", err);
-		// Fallback: save without encryption
 		chrome.storage.sync.set(
 			{
-				"address_protocol":   $("#address_protocol").val(),
-				"address_ip":         $("#address_ip").val(),
-				"address_port":       $("#address_port").val(),
-				"address_base":       $("#address_base").val(),
+				"address_protocol":   document.getElementById("address_protocol").value,
+				"address_ip":         document.getElementById("address_ip").value,
+				"address_port":       document.getElementById("address_port").value,
+				"address_base":       document.getElementById("address_base").value,
 				"password":           plainPassword,
-				"handle_torrents":    $("#handle_torrents").is(":checked"),
-				"handle_magnets":     $("#handle_magnets").is(":checked"),
-				"context_menu":       $("#context_menu").is(":checked"),
-				"badge_timeout":      parseInt($("#badge_timeout").val()),
-				"debug_mode":         $("#debug_mode").is(":checked"),
-				"dark_mode":          $("#dark_mode").val(),
+				"handle_torrents":    document.getElementById("handle_torrents").checked,
+				"handle_magnets":     document.getElementById("handle_magnets").checked,
+				"context_menu":       document.getElementById("context_menu").checked,
+				"badge_timeout":      parseInt(document.getElementById("badge_timeout").value),
+				"debug_mode":         document.getElementById("debug_mode").checked,
+				"dark_mode":          document.getElementById("dark_mode").value,
 				"version":            chrome.runtime.getManifest().version
 			},
 			function () {
-				debug_log("Settings saved (encryption failed, plain text fallback)");
+				debug_log("Settings saved (plain text fallback)");
 			}
 		);
 	});
 }
 
-$(function () {
-	$(".buttons .save").on("click", function () {
+document.addEventListener("DOMContentLoaded", function () {
+	document.querySelector(".buttons .save").addEventListener("click", function () {
 		saveOptions();
 	});
-	$(".buttons .apply").on("click", function () {
+	document.querySelector(".buttons .apply").addEventListener("click", function () {
 		saveOptions();
 		window.close();
 	});
-	$(".buttons .cancel").on("click", function () {
+	document.querySelector(".buttons .cancel").addEventListener("click", function () {
 		window.close();
 	});
-	$("#version").text(chrome.runtime.getManifest().version);
+	document.getElementById("version").textContent = chrome.runtime.getManifest().version;
 });
 
 chrome.storage.onChanged.addListener(function (changes, namespace) {
 	var messages = [];
 	for (var key in changes) {
 		var storageChange = changes[key];
-		debug_log('Storage key "%s" in namespace "%s" changed. Old value was "%s", new value is "%s".',
-			key, namespace, storageChange.oldValue, storageChange.newValue);
+		debug_log('Storage key "' + key + '" changed. Old: "' + storageChange.oldValue + '", New: "' + storageChange.newValue + '"');
+
 		switch (key) {
 			case "address_protocol":
 				messages.push("Address protocol updated.");
@@ -84,59 +82,63 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
 				messages.push("Password updated (encrypted).");
 				break;
 			case "handle_torrents":
-				var handle_torrents = $("#handle_torrents").is(":checked");
-				messages.push("Torrent link handling " + ((handle_torrents) ? "en" : "dis") + "abled!");
+				messages.push("Torrent link handling " + (document.getElementById("handle_torrents").checked ? "en" : "dis") + "abled!");
 				break;
 			case "handle_magnets":
-				var handle_magnets = $("#handle_magnets").is(":checked");
-				messages.push("Magnet link handling " + ((handle_magnets) ? "en" : "dis") + "abled!");
+				messages.push("Magnet link handling " + (document.getElementById("handle_magnets").checked ? "en" : "dis") + "abled!");
 				break;
 			case "context_menu":
-				var context_menu = $("#context_menu").is(":checked");
-				messages.push("Context Menu " + ((context_menu) ? "en" : "dis") + "abled!");
+				messages.push("Context Menu " + (document.getElementById("context_menu").checked ? "en" : "dis") + "abled!");
 				break;
 			case "badge_timeout":
-				messages.push("Badge timeout set to " + $("#badge_timeout option:selected").text());
+				var sel = document.getElementById("badge_timeout");
+				messages.push("Badge timeout set to " + sel.options[sel.selectedIndex].text);
 				break;
 			case "debug_mode":
-				var debug_mode = $("#debug_mode").is(":checked");
-				messages.push("Debug mode " + ((debug_mode) ? "en" : "dis") + "abled!");
+				messages.push("Debug mode " + (document.getElementById("debug_mode").checked ? "en" : "dis") + "abled!");
 				break;
 			case "dark_mode":
-				messages.push("Theme set to " + $("#dark_mode option:selected").text() + ".");
+				var dm = document.getElementById("dark_mode");
+				messages.push("Theme set to " + dm.options[dm.selectedIndex].text + ".");
 				break;
 		}
 	}
+
 	if (messages.length > 0) {
-		var messageText = "";
-		$.each(messages, function (index, obj) {
-			messageText += obj + "<br>";
-		});
-		messageText += "<br>";
-		$("#status-message").finish();
-		$("#status-message").html(messageText).fadeIn().delay(5000).fadeOut();
+		var statusEl = document.getElementById("status-message");
+		statusEl.innerHTML = messages.join("<br>") + "<br><br>";
+		statusEl.style.display = "";
+		statusEl.style.opacity = "1";
+
+		// Auto-fade after 5 seconds
+		clearTimeout(statusEl._fadeTimer);
+		statusEl._fadeTimer = setTimeout(function () {
+			DomHelper.fadeOut(statusEl, 500);
+		}, 5000);
 	}
 });
 
-// Load saved options and decrypt password
 chrome.storage.sync.get(function (items) {
-	for (var i in items) {
-		debug_log(i + "\t" + items[i] + "\t" + (typeof items[i]));
-		if (i === "password") {
-			// Decrypt password before showing in field
-			PasswordCrypto.decrypt(items[i]).then(function (plainPassword) {
-				$("#password").val(plainPassword);
+	for (var key in items) {
+		debug_log(key + "\t" + items[key] + "\t" + (typeof items[key]));
+
+		var el = document.getElementById(key);
+		if (!el) continue;
+
+		if (key === "password") {
+			PasswordCrypto.decrypt(items[key]).then(function (plainPassword) {
+				document.getElementById("password").value = plainPassword;
 			}).catch(function () {
-				$("#password").val("");
+				document.getElementById("password").value = "";
 			});
+		} else if (typeof items[key] === "boolean") {
+			el.checked = items[key];
 		} else {
-			$("#" + i).val(items[i]);
-		}
-		if (typeof items[i] === "boolean") {
-			$("#" + i).attr("checked", items[i]);
+			el.value = items[key];
 		}
 	}
-	if (window.location.search == "?newver=true") {
+
+	if (window.location.search === "?newver=true") {
 		debug_log("New version. Saving settings.");
 		saveOptions();
 	}
