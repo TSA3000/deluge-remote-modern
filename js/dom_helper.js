@@ -37,7 +37,7 @@ var DomHelper = {
 	 * Show an element (remove display:none).
 	 */
 	show: function (el) {
-		el.style.display = "";
+		el.style.display = "block";
 	},
 
 	/**
