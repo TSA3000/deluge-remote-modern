@@ -5,12 +5,14 @@
 ## v2.0.3 — The Vanilla JS Update
 
 ### Performance Overhaul
+
 - **jQuery Removed:** Replaced the heavy `jquery-4.0.0.min.js` (78.7KB) with a custom, ultra-lightweight `dom_helper.js` (1.4KB), saving ~77KB in overall extension size.
 - **Native DOM Methods:** Transitioned all core scripts to use faster, native JavaScript methods (e.g., `document.querySelector`, `addEventListener`).
 
-### Files Changed
+### Files Changed (v2.0.3)
+
 | File | Change |
-|---|---|
+| --- | --- |
 | `js/dom_helper.js` | **NEW** — Tiny helper (1.4KB) for fadeIn, fadeOut, show, hide, and delegated events |
 | `js/popup.js` | Rewritten (`$()` → `querySelector`, `.on()` → `addEventListener`, `.html()` → `innerHTML`) |
 | `js/options.js` | Rewritten (`$().val()` → `.value`, `$().is(":checked")` → `.checked`) |
@@ -18,20 +20,22 @@
 | `js/torrents.js` | Removed jQuery IIFE wrapper; transitioned filter logic to native DOM |
 | `js/timer.js` | Updated references for the new DOM helper |
 | `manifest.json` | Removed jQuery reference from `content_scripts` |
-| `popup.html`, `options.html`| Replaced jQuery script tag with `dom_helper.js` |
-| `js/libs/jquery-4.0.0.min.js`| **DELETED** |
+| `popup.html`, `options.html` | Replaced jQuery script tag with `dom_helper.js` |
+| `js/libs/jquery-4.0.0.min.js` | **DELETED** |
 
 ---
 
 ## v2.0.2 — Label Selector
 
-### New Features
+### New Features (v2.0.2)
+
 - **Label Selector** — Each torrent row now shows a dropdown to change its label directly from the popup. Uses Deluge's `label.set_torrent` API. Requires the Label plugin to be enabled in Deluge.
 - Label dropdown positioned on the info row between Seeds and Speed columns
 
-### Files Changed
+### Files Changed (v2.0.2)
+
 | File | Change |
-|---|---|
+| --- | --- |
 | `js/popup.js` | Added `labelSelector()` function, label change handler, label in info row |
 | `js/torrents.js` | Added `getLabels()` method, stores available labels |
 | `css/darkmode.css` | Added `.table_cell_label` styling for light and dark modes |
@@ -41,15 +45,18 @@
 
 ## v2.0.1 — Password Encryption
 
-### New Features
+### New Features (v2.0.1)
+
 - **Password Encryption (AES-256-GCM)** — Passwords are now encrypted before being stored. A per-installation AES-256 key is generated and stored locally (`chrome.storage.local`), while the encrypted password syncs via `chrome.storage.sync`. Backward compatible with plain text passwords from v2.0.0.
 
 ### Bug Fixes
+
 - **Fixed Error progress bar in dark mode** — Error state (red) now correctly overrides the finished state (green) when both classes are present on a torrent at 100%
 
-### Files Changed
+### Files Changed (v2.0.1)
+
 | File | Change |
-|---|---|
+| --- | --- |
 | `js/crypto.js` | **New** — AES-256-GCM encrypt/decrypt |
 | `js/background.js` | Added PasswordCrypto, decrypts password before login |
 | `js/options.js` | Encrypts password on save, decrypts on load |
@@ -62,6 +69,7 @@
 ## v2.0.0 — Manifest V3 Migration & Dark Mode
 
 ### Manifest V3 Migration
+
 - Background page replaced with a **service worker** (`background.js`)
 - All network calls rewritten from jQuery AJAX to native **fetch() API**
 - `chrome.extension.getBackgroundPage()` replaced with **chrome.runtime.sendMessage()**
@@ -70,12 +78,14 @@
 - `web_accessible_resources` updated to MV3 object format
 
 ### Dark Mode
+
 - Three modes: **System (auto)**, **Light**, **Dark**
 - Configurable in Options → Appearance → Theme
 - Dark styles scoped via `[data-theme="dark"]` — light mode completely untouched
 - Covers popup, options, progress bars, dialogs, filters, scrollbars
 
 ### Other Changes
+
 - Upgraded jQuery 3.0.0 → **4.0.0**
 - Removed unused `jquery_tablesorter.js`
 - Default protocol changed to **HTTPS**

@@ -27,66 +27,80 @@ This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/c
 ## Screenshots
 
 ### Dark Mode
-![](webstore/screenshot1dark.png)
+
+![Dark mode screenshot](webstore/screenshot1dark.png)
 
 ### Light Mode
-![](webstore/screenshot1light.png)
+
+![Light mode screenshot](webstore/screenshot1light.png)
 
 ### Original Style
-![](webstore/screenshot1.png)
+
+![Original style screenshot](webstore/screenshot1.png)
 
 ## Version History
 
 2026-04-02 v2.0.3
-* Completely removed jQuery dependency for a lighter footprint (saved ~77KB)
-* Replaced heavy jQuery methods with a lightweight custom `dom_helper.js`
-* Rewrote popup, options, torrents, and add_torrent logic in native Vanilla JS
+
+- Completely removed jQuery dependency for a lighter footprint (saved ~77KB)
+- Replaced heavy jQuery methods with a lightweight custom `dom_helper.js`
+- Rewrote popup, options, torrents, and add_torrent logic in native Vanilla JS
 
 2026-04-01 v2.0.2
-* Added label selector dropdown on each torrent row to change labels directly from the popup
-* Uses Deluge's `label.set_torrent` API (requires Label plugin enabled in Deluge)
-* Positioned the label dropdown in the info row between the Seeds and Speed columns
+
+- Added label selector dropdown on each torrent row to change labels directly from the popup
+- Uses Deluge's `label.set_torrent` API (requires Label plugin enabled in Deluge)
+- Positioned the label dropdown in the info row between the Seeds and Speed columns
 
 2026-04-01 v2.0.1
-* Added AES-256-GCM password encryption for `chrome.storage.sync` with local key generation
-* Added backward compatibility/auto-upgrade for plain text passwords from v2.0.0
-* Fixed Error state progress bar color in dark mode (red error state now correctly overrides the green finished state at 100%)
+
+- Added AES-256-GCM password encryption for `chrome.storage.sync` with local key generation
+- Added backward compatibility/auto-upgrade for plain text passwords from v2.0.0
+- Fixed Error state progress bar color in dark mode (red error state now correctly overrides the green finished state at 100%)
 
 2026-04-01 v2.0.0
-* Forked from YodaDaCoda/chrome-deluge-remote v1.2.4
-* Migrated to Manifest V3 (service worker, native `fetch()` API, `chrome.runtime.sendMessage()`, `chrome.action`)
-* Added dark mode support (System/Light/Dark themes covering popup, options, progress bars, etc.)
-* Upgraded jQuery 3.0.0 → 4.0.0 and removed unused `jquery_tablesorter.js`
-* Default protocol changed to HTTPS
-* Handling of .torrent and magnet links enabled by default
-* Fixed active icon image format and introduced a new green active icon for clear connected/disconnected states
-* Added robust error handling (`.catch()`) on all icon and message calls
-* Renamed extension to Deluge Remote Modern
+
+- Forked from YodaDaCoda/chrome-deluge-remote v1.2.4
+- Migrated to Manifest V3 (service worker, native `fetch()` API, `chrome.runtime.sendMessage()`, `chrome.action`)
+- Added dark mode support (System/Light/Dark themes covering popup, options, progress bars, etc.)
+- Upgraded jQuery 3.0.0 → 4.0.0 and removed unused `jquery_tablesorter.js`
+- Default protocol changed to HTTPS
+- Handling of .torrent and magnet links enabled by default
+- Fixed active icon image format and introduced a new green active icon for clear connected/disconnected states
+- Added robust error handling (`.catch()`) on all icon and message calls
+- Renamed extension to Deluge Remote Modern
 
 ### Original Version History (by YodaDaCoda)
 
 2017-04-10 v1.2.4
-* Fix for Deluge v1.3.14
+
+- Fix for Deluge v1.3.14
 
 2016-06-22 v1.2.3
-* Fix bug for first-time users.
+
+- Fix bug for first-time users.
 
 2016-06-22 v1.2.2
-* Fix a couple niggling bugs and added a donate button.
+
+- Fix a couple niggling bugs and added a donate button.
 
 2016-01-27 v1.2.1
-* Fixed broken settings from v1.2.0
+
+- Fixed broken settings from v1.2.0
 
 2016-01-26 v1.2.0
-* Fix context menu
-* Fixed possible connections issue
-* Various other code improvements
+
+- Fix context menu
+- Fixed possible connections issue
+- Various other code improvements
 
 2015-06-04 v1.1.0
-* Fix for connectivity problem introduced in last version
+
+- Fix for connectivity problem introduced in last version
 
 2015-06-03 v1.0.0
-+ Add an option to settings for a base path for reverse-proxied connections.
+
+- Add an option to settings for a base path for reverse-proxied connections.
 
 ## License
 
