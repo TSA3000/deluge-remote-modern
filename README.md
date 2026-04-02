@@ -37,32 +37,31 @@ This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/c
 
 ## Version History
 
-2026-04-02 v2.1.0
+2026-04-02 v2.0.3
 * Completely removed jQuery dependency for a lighter footprint (saved ~77KB)
 * Replaced heavy jQuery methods with a lightweight custom `dom_helper.js`
 * Rewrote popup, options, torrents, and add_torrent logic in native Vanilla JS
 
 2026-04-01 v2.0.2
-* Added label selector dropdown on each torrent in the popup
-* Uses Deluge's `label.set_torrent` API (requires Label plugin enabled)
-* Fixed Error state progress bar color in dark mode
+* Added label selector dropdown on each torrent row to change labels directly from the popup
+* Uses Deluge's `label.set_torrent` API (requires Label plugin enabled in Deluge)
+* Positioned the label dropdown in the info row between the Seeds and Speed columns
 
 2026-04-01 v2.0.1
-* Added AES-GCM password encryption for `chrome.storage.sync`
-* Added dynamic local AES-256 key generation
-* Added backward compatibility/auto-upgrade for plain text passwords
+* Added AES-256-GCM password encryption for `chrome.storage.sync` with local key generation
+* Added backward compatibility/auto-upgrade for plain text passwords from v2.0.0
+* Fixed Error state progress bar color in dark mode (red error state now correctly overrides the green finished state at 100%)
 
 2026-04-01 v2.0.0
 * Forked from YodaDaCoda/chrome-deluge-remote v1.2.4
-* Migrated to Manifest V3 (service worker, fetch API, chrome.action)
-* Added dark mode support (System/Light/Dark)
-* Upgraded jQuery 3.0.0 → 4.0.0
-* Removed unused jquery_tablesorter.js
+* Migrated to Manifest V3 (service worker, native `fetch()` API, `chrome.runtime.sendMessage()`, `chrome.action`)
+* Added dark mode support (System/Light/Dark themes covering popup, options, progress bars, etc.)
+* Upgraded jQuery 3.0.0 → 4.0.0 and removed unused `jquery_tablesorter.js`
 * Default protocol changed to HTTPS
-* Handle .torrent and magnet links enabled by default
-* Fixed active icon (was JPEG disguised as PNG)
-* New green active icon for clear connected state
-* Improved error handling throughout
+* Handling of .torrent and magnet links enabled by default
+* Fixed active icon image format and introduced a new green active icon for clear connected/disconnected states
+* Added robust error handling (`.catch()`) on all icon and message calls
+* Renamed extension to Deluge Remote Modern
 
 ### Original Version History (by YodaDaCoda)
 

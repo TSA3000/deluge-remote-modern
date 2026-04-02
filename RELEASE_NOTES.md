@@ -1,6 +1,25 @@
-# Deluge Remote Modern v2.0.2 Release Notes
+# Deluge Remote Modern Release Notes
 
-**Release Date:** 2026-04-01
+---
+
+## v2.0.3 — The Vanilla JS Update
+
+### Performance Overhaul
+- **jQuery Removed:** Replaced the heavy `jquery-4.0.0.min.js` (78.7KB) with a custom, ultra-lightweight `dom_helper.js` (1.4KB), saving ~77KB in overall extension size.
+- **Native DOM Methods:** Transitioned all core scripts to use faster, native JavaScript methods (e.g., `document.querySelector`, `addEventListener`).
+
+### Files Changed
+| File | Change |
+|---|---|
+| `js/dom_helper.js` | **NEW** — Tiny helper (1.4KB) for fadeIn, fadeOut, show, hide, and delegated events |
+| `js/popup.js` | Rewritten (`$()` → `querySelector`, `.on()` → `addEventListener`, `.html()` → `innerHTML`) |
+| `js/options.js` | Rewritten (`$().val()` → `.value`, `$().is(":checked")` → `.checked`) |
+| `js/add_torrent.js` | Global body event listeners updated to `document.body.addEventListener()` |
+| `js/torrents.js` | Removed jQuery IIFE wrapper; transitioned filter logic to native DOM |
+| `js/timer.js` | Updated references for the new DOM helper |
+| `manifest.json` | Removed jQuery reference from `content_scripts` |
+| `popup.html`, `options.html`| Replaced jQuery script tag with `dom_helper.js` |
+| `js/libs/jquery-4.0.0.min.js`| **DELETED** |
 
 ---
 
