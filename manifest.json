@@ -1,7 +1,7 @@
 {
 	"name": "Deluge Remote Modern",
 	"description": "A modern Manifest V3 fork of Remote Deluge. Quick overview of torrent status for Deluge with dark mode support.",
-	"version": "2.0.3",
+	"version": "2.0.5",
 	"icons": {
 		"128": "images/icons/128.png",
 		"64": "images/icons/64.png",
