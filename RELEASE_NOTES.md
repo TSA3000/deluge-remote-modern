@@ -2,14 +2,28 @@
 
 ---
 
+## v2.0.5 — Label Selector Usability Fix
+
+### Bug Fixes (v2.0.5)
+
+- **Label Dropdown Closing:** Fixed an issue where the label selector dropdown would close unexpectedly if the UI refreshed while the user was trying to make a selection. The background table refresh is now automatically paused when the dropdown is focused.
+
+### Files Changed (v2.0.5)
+
+| File | Change |
+| --- | --- |
+| `js/popup.js` | Added `focus` and `blur` event listeners to `.label_select` to trigger `pauseTableRefresh()` and `resumeTableRefresh()` |
+
+---
+
 ## v2.0.4 — UI & Dark Mode Fixes
 
-### Bug Fixes
+### Bug Fixes (v2.0.4)
 
 - **Add Torrent Dialog Fix:** Fixed an issue where clicking the "Add Torrent" button failed to show the popup dialog. The custom DOM helper now explicitly overrides the stylesheet by setting `display: block`.
 - **Dark Mode Progress Bar Fix:** Fixed a specificity conflict in dark mode where a paused torrent at 100% completion would incorrectly display the green "finished" color instead of the grey "paused" color.
 
-### Files Changed
+### Files Changed (v2.0.4)
 
 | File | Change |
 | --- | --- |
