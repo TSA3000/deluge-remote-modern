@@ -2,6 +2,20 @@
 
 ---
 
+## v2.0.6 — Version Bump
+
+### Maintenance
+
+- **Manifest Update:** Updated the extension version in `manifest.json` to accurately reflect the current release version.
+
+### Files Changed
+
+| File | Change |
+| --- | --- |
+| `manifest.json` | Bumped `version` to "2.0.6" |
+
+---
+
 ## v2.0.5 — Label Selector Usability Fix
 
 ### Bug Fixes (v2.0.5)
