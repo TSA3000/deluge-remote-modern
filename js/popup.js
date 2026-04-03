@@ -13,7 +13,6 @@ document.addEventListener("DOMContentLoaded", function () {
 	var REFRESH_INTERVAL = 1000;
 	var refreshTimer = Timer(REFRESH_INTERVAL);
 
-	// Pre-built label options HTML (rebuilt only when labels change)
 	var cachedLabelOptionsHtml = '<option value="">(No Label)</option>';
 	var lastLabelHash = "";
 
@@ -183,7 +182,17 @@ document.addEventListener("DOMContentLoaded", function () {
 			});
 	}
 
-	// Label change
+	// Label click — pause refresh so dropdown stays open
+	DomHelper.on(torrentContainer, "mousedown", ".label_select", function () {
+		pauseTableRefresh();
+	});
+
+	// Label closed without change — resume after short delay
+	DomHelper.on(torrentContainer, "focusout", ".label_select", function () {
+		setTimeout(resumeTableRefresh, 300);
+	});
+
+	// Label change — set label via API
 	DomHelper.on(torrentContainer, "change", ".label_select", function () {
 		var torrentId = this.getAttribute("data-torrent-id");
 		var newLabel = this.value;
@@ -260,7 +269,6 @@ document.addEventListener("DOMContentLoaded", function () {
 			DelugeMethod("core.remove_torrent", rowData.torrent, true);
 		}
 
-		// Remove delete options and show actions again
 		var td = this.closest("td");
 		var deleteOpts = td.querySelector(".delete-options");
 		if (deleteOpts) {
