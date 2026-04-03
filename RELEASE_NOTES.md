@@ -2,6 +2,22 @@
 
 ---
 
+## v2.0.8 — Variable Refresh Rate
+
+### New Features
+
+- **Customizable Refresh Rate:** Added a new setting in the Options menu that allows users to choose how frequently the extension polls the Deluge server for updates (ranging from 500ms to 30s). This gives users better control over performance and server load.
+
+### Files Changed (v2.0.8)
+
+| File | Change |
+| --- | --- |
+| `options.html` / `js/options.js` | Added the UI dropdown and save logic for the new refresh interval setting. |
+| `js/global_options.js` | Added `refresh_interval` to the default configuration state. |
+| `js/popup.js` | Updated the `Timer` and refresh logic to respect the user's custom interval instead of hardcoding 1000ms. |
+
+---
+
 ## v2.0.7 — Server Crash Prevention
 
 ### Bug Fixes

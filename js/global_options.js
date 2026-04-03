@@ -8,6 +8,7 @@ var ExtensionConfig = {
 	handle_torrents:  true,
 	context_menu:     false,
 	badge_timeout:    250,
+	refresh_interval: 1000,
 	debug_mode:       false,
 	dark_mode:        "system"
 };

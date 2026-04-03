@@ -44,6 +44,10 @@ This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/c
 
 ## Version History
 
+2026-04-03 v2.0.8
+
+- Added a variable refresh rate setting in the Options menu to control how often the UI updates
+
 2026-04-03 v2.0.7
 
 - Fixed a critical issue where deleting a torrent could crash the Deluge daemon due to concurrent API requests

@@ -13,6 +13,7 @@ function saveOptions() {
 				"handle_magnets":     document.getElementById("handle_magnets").checked,
 				"context_menu":       document.getElementById("context_menu").checked,
 				"badge_timeout":      parseInt(document.getElementById("badge_timeout").value),
+				"refresh_interval":   parseInt(document.getElementById("refresh_interval").value),
 				"debug_mode":         document.getElementById("debug_mode").checked,
 				"dark_mode":          document.getElementById("dark_mode").value,
 				"version":            chrome.runtime.getManifest().version
@@ -34,6 +35,7 @@ function saveOptions() {
 				"handle_magnets":     document.getElementById("handle_magnets").checked,
 				"context_menu":       document.getElementById("context_menu").checked,
 				"badge_timeout":      parseInt(document.getElementById("badge_timeout").value),
+				"refresh_interval":   parseInt(document.getElementById("refresh_interval").value),
 				"debug_mode":         document.getElementById("debug_mode").checked,
 				"dark_mode":          document.getElementById("dark_mode").value,
 				"version":            chrome.runtime.getManifest().version
@@ -93,6 +95,10 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
 			case "badge_timeout":
 				var sel = document.getElementById("badge_timeout");
 				messages.push("Badge timeout set to " + sel.options[sel.selectedIndex].text);
+				break;
+			case "refresh_interval":
+				var ri = document.getElementById("refresh_interval");
+				messages.push("Refresh interval set to " + ri.options[ri.selectedIndex].text + ". Reopen popup to apply.");
 				break;
 			case "debug_mode":
 				messages.push("Debug mode " + (document.getElementById("debug_mode").checked ? "en" : "dis") + "abled!");

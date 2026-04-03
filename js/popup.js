@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	var globalSeeding = document.querySelector("#global-information .seeding");
 	var globalQueued = document.querySelector("#global-information .queued");
 
-	var REFRESH_INTERVAL = 1000;
+	var REFRESH_INTERVAL = ExtensionConfig.refresh_interval || 1000;
 	var refreshTimer = Timer(REFRESH_INTERVAL);
 
 	var cachedLabelOptionsHtml = '<option value="">(No Label)</option>';
