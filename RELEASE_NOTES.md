@@ -2,6 +2,22 @@
 
 ---
 
+## v2.0.4 — UI & Dark Mode Fixes
+
+### Bug Fixes
+
+- **Add Torrent Dialog Fix:** Fixed an issue where clicking the "Add Torrent" button failed to show the popup dialog. The custom DOM helper now explicitly overrides the stylesheet by setting `display: block`.
+- **Dark Mode Progress Bar Fix:** Fixed a specificity conflict in dark mode where a paused torrent at 100% completion would incorrectly display the green "finished" color instead of the grey "paused" color.
+
+### Files Changed
+
+| File | Change |
+| --- | --- |
+| `js/dom_helper.js` | Updated the `show` method to force `display: "block"` instead of clearing the inline style |
+| `css/darkmode.css` | Added `:not(.Paused)` to the `.finished` progress bar rules to preserve the grey paused state at 100% |
+
+---
+
 ## v2.0.3 — The Vanilla JS Update
 
 ### Performance Overhaul
@@ -49,7 +65,7 @@
 
 - **Password Encryption (AES-256-GCM)** — Passwords are now encrypted before being stored. A per-installation AES-256 key is generated and stored locally (`chrome.storage.local`), while the encrypted password syncs via `chrome.storage.sync`. Backward compatible with plain text passwords from v2.0.0.
 
-### Bug Fixes
+### Bug Fixes (v2.0.1)
 
 - **Fixed Error progress bar in dark mode** — Error state (red) now correctly overrides the finished state (green) when both classes are present on a torrent at 100%
 
