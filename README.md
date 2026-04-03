@@ -44,6 +44,12 @@ This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/c
 
 ## Version History
 
+2026-04-03 v2.0.7
+
+- Fixed a critical issue where deleting a torrent could crash the Deluge daemon due to concurrent API requests
+- Blocked deletion of torrents currently in "Moving" or "Allocating" states to protect file system integrity
+- Improved webpage click interception to successfully capture `.torrent` links with query parameters or uppercase extensions
+
 2026-04-03 v2.0.6
 
 - Updated version number in `manifest.json` to match current release

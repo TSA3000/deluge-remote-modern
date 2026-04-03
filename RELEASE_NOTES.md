@@ -2,13 +2,30 @@
 
 ---
 
+## v2.0.7 — Server Crash Prevention
+
+### Bug Fixes
+
+- **Delete Torrent Crash Fix:** Fixed a critical bug where deleting a torrent could cause the Deluge daemon to crash. This was triggered by rapid concurrent API calls (e.g., double-clicking the delete button or the background table refreshing at the exact moment a deletion was processing). Added a locking mechanism to prevent double-clicks and paused background refreshes until the deletion safely completes.
+- **Safe Deletion Guard:** Added a check to prevent users from deleting a torrent while it is actively in a "Moving" or "Allocating" state, protecting the daemon from I/O errors and preventing orphaned data files on the disk.
+- **Torrent Link Capture:** Improved the click interceptor on webpages to reliably capture `.torrent` links even when they contain query parameters (e.g., `?passkey=...`) or uppercase extensions (`.TORRENT`), by switching from strict regex to a robust URL parser.
+
+### Files Changed (v2.0.7)
+
+| File | Change |
+| --- | --- |
+| `js/popup.js` | Updated the `.delete-options a` click handler with a `dataset.clicked` lock to block double-clicks, and modified the refresh logic to wait for the server's confirmation before updating the table. |
+| `js/add_torrent.js` | Replaced strict regex with `new URL()` parser for `.torrent` links, and added early returns for efficiency. |
+
+---
+
 ## v2.0.6 — Version Bump
 
 ### Maintenance
 
 - **Manifest Update:** Updated the extension version in `manifest.json` to accurately reflect the current release version.
 
-### Files Changed
+### Files Changed (v2.0.6)
 
 | File | Change |
 | --- | --- |

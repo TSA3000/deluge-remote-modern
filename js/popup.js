@@ -238,8 +238,20 @@ document.addEventListener("DOMContentLoaded", function () {
 		DelugeMethod(method, rowData.torrent, rmdata);
 	});
 
-	// Delete button — show options
+// Delete button — show options
 	DomHelper.on(torrentContainer, "click", ".main_actions .delete", function () {
+		// 1. Get the torrent data for this specific row
+		var rowData = getRowData(this);
+		if (!rowData || !rowData.torrent) return;
+
+		// 2. GUARD: Prevent opening the delete menu if moving or allocating
+		var blockedStates = ["Moving", "Allocating"];
+		if (blockedStates.includes(rowData.torrent.state)) {
+			alert("Cannot delete a torrent while it is moving data on the disk. Please wait.");
+			return; // Stop the function here so the menu doesn't open
+		}
+
+		// 3. If it is safe, proceed with opening the delete menu
 		pauseTableRefresh();
 		var td = this.closest("td");
 		var actions = td.querySelector(".main_actions");
@@ -257,11 +269,21 @@ document.addEventListener("DOMContentLoaded", function () {
 		});
 	});
 
-	// Delete option clicks
+// Delete option clicks
 	DomHelper.on(torrentContainer, "click", ".delete-options a", function (e) {
 		e.preventDefault();
+
+		var td = this.closest("td");
+		var deleteOpts = td.querySelector(".delete-options");
+		
+		// Prevent double-clicks that cause the Deluge server to crash
+		if (!deleteOpts || deleteOpts.dataset.clicked) return;
+		deleteOpts.dataset.clicked = "true";
+
 		var rowData = getRowData(this);
 		if (!rowData) return;
+
+		var isCancel = this.classList.contains("rm_cancel");
 
 		if (this.classList.contains("rm_torrent")) {
 			DelugeMethod("core.remove_torrent", rowData.torrent, false);
@@ -269,20 +291,21 @@ document.addEventListener("DOMContentLoaded", function () {
 			DelugeMethod("core.remove_torrent", rowData.torrent, true);
 		}
 
-		var td = this.closest("td");
-		var deleteOpts = td.querySelector(".delete-options");
-		if (deleteOpts) {
-			DomHelper.fadeOut(deleteOpts, 200, function () {
-				deleteOpts.remove();
-				var actions = td.querySelector(".main_actions");
-				if (actions) {
-					DomHelper.fadeIn(actions, 200, function () {
+		// Remove delete options and show actions again
+		DomHelper.fadeOut(deleteOpts, 200, function () {
+			deleteOpts.remove();
+			var actions = td.querySelector(".main_actions");
+			if (actions) {
+				DomHelper.fadeIn(actions, 200, function () {
+					// Only force an immediate refresh if the user clicked Cancel.
+					// If they deleted a torrent, DelugeMethod handles the refresh safely.
+					if (isCancel) {
 						resumeTableRefresh();
 						updateTable();
-					});
-				}
-			});
-		}
+					}
+				});
+			}
+		});
 	});
 
 	// ── Add Torrent Dialog ──────────────────────────────────────────────
