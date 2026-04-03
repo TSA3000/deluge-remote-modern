@@ -26,6 +26,10 @@ This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/c
 
 ## Screenshots
 
+### Dark & light mode screenshot Latest
+
+![Dark & light mode screenshot Latest](webstore/screenshot1darkNlight.png)
+
 ### Dark Mode
 
 ![Dark mode screenshot](webstore/screenshot1dark.png)
@@ -39,6 +43,11 @@ This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/c
 ![Original style screenshot](webstore/screenshot1.png)
 
 ## Version History
+
+2026-04-03 v2.0.4
+
+- Fixed an issue where the Add Torrent dialog would not display when clicked
+- Fixed a dark mode UI bug where a 100% finished torrent would incorrectly show as green instead of grey while paused
 
 2026-04-02 v2.0.3
 
