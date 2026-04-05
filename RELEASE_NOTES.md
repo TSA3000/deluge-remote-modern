@@ -2,6 +2,65 @@
 
 ---
 
+## v2.2.0 — Icon Pack System
+
+### New Features
+
+- **Selectable Icon Packs:** A new "Icon Pack" option in the Appearance section of the Options page lets users choose between two button styles for the torrent list.
+- **Classic (default):** The original 16×16 PNG icons unchanged. No visual difference for existing users — a zero-disruption default.
+- **Modern (SVG glyphs):** A full set of crisp SVG icons that use CSS `mask-image` to render in the browser. Because they use `currentColor` via CSS variables, they automatically match the active theme — pause is yellow, resume is green, managed is blue, delete is red — with each dark theme (Dark, Nord, Dracula, Solarized) getting its own tuned palette.
+- **Live Preview:** The Options page shows a live icon strip below the selector that updates instantly as you switch packs (and themes), so you can see exactly what you're getting before saving.
+- **Extensible Architecture:** Adding a third icon pack in the future requires only a new CSS file and a `<option>` in the dropdown — no JS changes needed.
+
+### How It Works
+
+- `html[data-icons="modern"]` is set on the root element by `applyIconPack()` in `global_options.js`
+- `css/icon-pack-classic.css` scopes the PNG rules under `html:not([data-icons="modern"])` — active by default
+- `css/icon-pack-modern.css` scopes SVG mask rules under `html[data-icons="modern"]` with per-theme color overrides
+- The old bare icon rules in `popup.css` are removed to avoid specificity conflicts
+
+### Files Changed (v2.2.0)
+
+| File | Change |
+| --- | --- |
+| `images/glyphs/` | **NEW folder** — 12 SVG glyph files (pause, resume, up, down, managed, unmanaged, recheck, remove, cancel, trash, torrent_file, add_torrent) |
+| `css/icon-pack-classic.css` | **NEW** — Scoped PNG icon rules (active when no `data-icons` attribute) |
+| `css/icon-pack-modern.css` | **NEW** — SVG mask icon rules with per-theme semantic colors |
+| `css/popup.css` | Removed bare icon background rules (now in icon-pack CSS files) |
+| `js/global_options.js` | Added `icon_pack: "classic"` default, `applyIconPack()` function, change listener |
+| `js/options.js` | Added `icon_pack` to save/load, live preview on select change, status message case |
+| `options.html` | Added icon pack `<select>` + live preview strip to Appearance fieldset; added icon-pack CSS `<link>` tags |
+| `popup.html` | Added icon-pack CSS `<link>` tags |
+| `manifest.json` | Version bumped to `2.2.0` |
+
+---
+
+## v2.1.0 — Theme Engine
+
+### New Features
+
+- **Multi-Theme Support:** Replaced the single `darkmode.css` with a full CSS custom-property theme engine. Users can now choose from four built-in themes: **Dark (Midnight Blue)**, **Solarized Dark**, **Nord**, and **Dracula**.
+- **Extensible Architecture:** A new `css/theme-base.css` file contains all themed selectors using only CSS variables — it has zero hardcoded colors. Adding a new theme requires only a single CSS file defining variables under `[data-theme="mytheme"]`, a link tag in the HTML, and a dropdown option.
+- **System Preference Integration:** The "System (auto)" mode now maps directly to the active theme's variable set via `@media (prefers-color-scheme: dark)`, giving consistent automatic theming without any JavaScript.
+- **Light Mode Preservation:** All theme rules are scoped to `[data-theme]:not([data-theme="light"])`, ensuring the default light appearance is completely untouched.
+
+### Files Changed (v2.1.0)
+
+| File | Change |
+| --- | --- |
+| `css/theme-base.css` | **NEW** — All themed selectors using CSS variables; no hardcoded colors |
+| `css/themes/dark.css` | **NEW** — Dark (Midnight Blue) theme variables |
+| `css/themes/solarized.css` | **NEW** — Solarized Dark theme variables |
+| `css/themes/nord.css` | **NEW** — Nord theme variables |
+| `css/themes/dracula.css` | **NEW** — Dracula theme variables |
+| `css/darkmode.css` | **REMOVED** — Replaced by the theme engine |
+| `popup.html` | Added `<link>` tags for `theme-base.css` and all four theme files |
+| `options.html` | Added `<link>` tags for `theme-base.css` and all four theme files; added theme options to dropdown |
+| `js/global_options.js` | `applyDarkMode()` updated to set `data-theme` attribute for any theme name |
+| `manifest.json` | Version bumped to `2.1.0` |
+
+---
+
 ## v2.0.9 - Permissions & Performance
 
 ### Fixed
