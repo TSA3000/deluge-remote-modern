@@ -2,6 +2,26 @@
 
 ---
 
+## 2.0.9
+
+### Fixed
+
+- **Permissions:** Removed `tabs` permission from `manifest.json` as it was not required for current functionality.
+- **Performance:** Adjusted the dashboard refresh rate from 1 second to **3 seconds** to reduce background resource usage while maintaining a responsive UI.
+
+### Changed
+
+- Bumped version for resubmission to Chrome Web Store.
+
+### Files Changed (v2.0.9)
+
+| File | Change |
+| --- | --- |
+| `manifest.jsonl` | Removed `tabs` permission|
+| `js/global_options.js` | Changed refresh_interval to 3000 "3 seconds" |
+
+---
+
 ## v2.0.8 — Variable Refresh Rate
 
 ### New Features

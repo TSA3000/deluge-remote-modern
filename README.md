@@ -3,6 +3,23 @@
 [![GitHub release](https://img.shields.io/github/release/TSA3000/deluge-remote-modern.svg)](https://github.com/TSA3000/deluge-remote-modern/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](MIT-LICENSE)
 
+Deluge Remote Modern is a lightweight, open-source browser extension that allows you to manage your Deluge BitTorrent client directly from your browser. This is a complete modern fork of the original Remote Deluge, fully updated for Google’s Manifest V3 standards to ensure long-term support, security, and performance.
+
+Key Features:
+
+Real-Time Monitoring: Instantly view torrent status, download/upload speeds, ETA, and ratios through a clean, modern popup.
+
+Complete Control: Pause, resume, remove, or re-order torrents without leaving your current tab.
+
+One-Click Adding: Seamlessly send magnet links or .torrent file URLs to your Deluge server via context menus or automated link detection.
+
+Secure & Private: Your Deluge password is encrypted locally using AES-GCM (SubtleCrypto) before being stored in your browser's sync storage.
+
+Dark Mode Support: Full support for system-wide dark mode for a comfortable viewing experience at night.
+
+Why Choose Deluge Remote Modern?
+Unlike older extensions, this version is built for the future of the web. We have optimized the background service workers and reduced required permissions to the absolute minimum to protect your privacy and browsing speed.
+
 A modern, Manifest V3 fork of [Remote Deluge](https://github.com/YodaDaCoda/chrome-deluge-remote) by [YodaDaCoda](https://github.com/YodaDaCoda).
 
 Provides quick overview of torrent information in Chrome for the torrent client Deluge.
@@ -43,6 +60,11 @@ This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/c
 ![Original style screenshot](webstore/screenshot1.png)
 
 ## Version History
+
+2026-04-03 v2.0.9
+
+- Removed unnecessary `tabs` permission to comply with Chrome Web Store policies.
+- Adjusted UI refresh frequency to **3 seconds** for better performance.
 
 2026-04-03 v2.0.8
 
