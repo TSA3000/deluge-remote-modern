@@ -45,9 +45,26 @@ Torrent.prototype.getHumanSize = function () {
 Torrent.prototype.getHumanDownloadedSize = function() {
 	return this.calcSize(this.size * this.progress / 100)
 }
-Torrent.prototype.getRatio = function() {
+
+// States where live stats (ETA, speeds, peers) are meaningful
+Torrent.prototype.isActive = function () {
+	return this.state === 'Downloading' || this.state === 'Seeding';
+};
+
+Torrent.prototype.getRatio = function () {
+	if (this.ratio <= 0) return '—';
 	return this.ratio.toFixed(2);
-}
+};
+
+Torrent.prototype.getPeers = function () {
+	if (!this.isActive()) return '—';
+	return this.num_peers + '/' + this.total_peers;
+};
+
+Torrent.prototype.getSeeds = function () {
+	if (!this.isActive()) return '—';
+	return this.num_seeds + '/' + this.total_seeds;
+};
 
 Torrent.prototype.getPosition = function () {
 	if (this.position < 0) {
@@ -69,15 +86,18 @@ Torrent.prototype.getUpload = function () {
 };
 
 Torrent.prototype.getSpeeds = function () {
-	return "↓" + this.getDownload() + " - ↑" + this.getUpload();
+	if (!this.isActive() && this.speedDownload === 0 && this.speedUpload === 0) {
+		return '—';
+	}
+	return '↓' + this.getDownload() + ' ↑' + this.getUpload();
 };
 
 Torrent.prototype.getEta = function () {
 	var secs = 0, mins = 0, hours = 0, days = 0
 		, time = this.eta;
 
-	if (time === 0) {
-		return '&infin;';
+	if (!this.isActive() || time <= 0) {
+	return '&infin;';
 	}
 
 	time = time.toFixed(0);

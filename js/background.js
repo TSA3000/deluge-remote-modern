@@ -117,15 +117,17 @@ async function startDaemon(hostId) {
 }
 
 async function connectToDaemon() {
-	const hosts = await DelugeAPI.call("web.get_hosts");
-	if (hosts.error) throw new Error("Failed to get hosts");
-	if (!hosts.result || hosts.result.length !== 1) {
-		throw new Error("Expected exactly one host");
-	}
-	const hostId = hosts.result[0][0];
-	await startDaemon(hostId);
-	const conn = await DelugeAPI.call("web.connect", [hostId]);
-	if (conn.error) throw new Error("Failed to connect to daemon");
+    const hosts = await DelugeAPI.call("web.get_hosts");
+    if (hosts.error || !hosts.result || hosts.result.length === 0) {
+        throw new Error("No hosts available");
+    }
+    // Prefer already-connected host, otherwise use first
+    const connected = hosts.result.find(h => h[3] === "Connected");
+    const host = connected || hosts.result[0];
+    const hostId = host[0];
+    await startDaemon(hostId);
+    const conn = await DelugeAPI.call("web.connect", [hostId]);
+    if (conn.error) throw new Error("Failed to connect to daemon");
 }
 
 // ── Password Crypto (AES-GCM) ───────────────────────────────────────────────
@@ -306,7 +308,7 @@ async function addTorrentFromUrl(url, tabId) {
 
 // ── Add Torrent from Magnet ─────────────────────────────────────────────────
 async function addTorrentFromMagnet(url, tabId) {
-	const resp = await DelugeAPI.call("core.add_torrent_magnet", [url, ""]);
+	const resp = await DelugeAPI.call("core.add_torrent_magnet", [url, {}]);
 
 	if (resp.result) {
 		debug_log("Deluge: added magnet.");
