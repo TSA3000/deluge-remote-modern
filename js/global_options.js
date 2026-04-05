@@ -40,11 +40,11 @@ chrome.storage.sync.get(function (items) {
 function applyDarkMode(mode) {
 	if (typeof document === "undefined") return;
 	var html = document.documentElement;
-	if (mode === "dark") {
-		html.setAttribute("data-theme", "dark");
-	} else if (mode === "light") {
-		html.setAttribute("data-theme", "light");
-	} else {
+	if (mode === "system") {
+		// Let CSS @media prefers-color-scheme handle it
 		html.removeAttribute("data-theme");
+	} else {
+		// Set any theme name: "light", "dark", "solarized", "nord", "dracula", etc.
+		html.setAttribute("data-theme", mode);
 	}
 }
