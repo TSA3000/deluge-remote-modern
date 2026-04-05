@@ -11,9 +11,50 @@
 		<link href="css/master.css" rel="stylesheet" type="text/css">
 		<link href="css/options.css" rel="stylesheet" type="text/css">
 		<link href="css/chrome.css" rel="stylesheet" type="text/css">
-		<link href="css/darkmode.css" rel="stylesheet" type="text/css">
+		<link href="css/theme-base.css" rel="stylesheet" type="text/css">
+		<link href="css/themes/dark.css" rel="stylesheet" type="text/css">
+		<link href="css/themes/solarized.css" rel="stylesheet" type="text/css">
+		<link href="css/themes/nord.css" rel="stylesheet" type="text/css">
+		<link href="css/themes/dracula.css" rel="stylesheet" type="text/css">
+		<link href="css/icon-pack-classic.css" rel="stylesheet" type="text/css">
+		<link href="css/icon-pack-modern.css" rel="stylesheet" type="text/css">
+		<style>
+			/* Icon pack preview strip */
+			.icon-preview {
+				display: flex;
+				gap: 6px;
+				align-items: center;
+				margin-top: 6px;
+				padding: 6px 8px;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				background: rgba(128,128,128,0.06);
+				width: fit-content;
+			}
+			[data-theme]:not([data-theme="light"]) .icon-preview {
+				border-color: var(--theme-border-color);
+			}
+			.icon-preview .table_cell_actions {
+				position: static;
+				display: flex;
+				gap: 2px;
+			}
+			.icon-preview .table_cell_actions a,
+			.icon-preview .delete-options a {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 20px;
+				height: 20px;
+				cursor: default;
+			}
+			.icon-preview-label {
+				font-size: 9px;
+				color: #888;
+				margin-left: 4px;
+			}
+		</style>
 	</head>
-
 	<body>
 		<div id="content">
 			<div id="header">
@@ -22,18 +63,15 @@
 				</div>
 				<div class="clr"></div>
 			</div>
-
 			<div id="options">
 				<div class="chrome-header">
 					<h2>Configuration</h2>
 				</div>
-
 				<div class="chrome-sub-header">
 					<p>This extension requires an accessible version of Deluge web interface to be running. Please refer to the <a href="http://deluge-torrent.org/" target="_blank">Deluge documentation</a> on how to get this working.</p>
 					<p>In order to connect to the web interface we need to know some details. The address used to access the interface (https://address:port/) and the password to login is the base level required.</p>
 					<p>Originally created by <a href="https://github.com/YodaDaCoda/chrome-deluge-remote" target="_blank">YodaDaCoda</a>. Modernized with MV3 and dark mode support.</p>
 				</div>
-
 				<fieldset>
 					<legend>Basic Setup</legend>
 					<table>
@@ -65,7 +103,6 @@
 						</tr>
 					</table>
 				</fieldset>
-
 				<fieldset>
 					<legend>Link Handling</legend>
 					<table>
@@ -95,25 +132,55 @@
 						</tr>
 					</table>
 				</fieldset>
-
 				<fieldset>
 					<legend>Appearance</legend>
 					<table>
 						<tr>
 							<td>
-								<label for="dark_mode">Theme<span><br>Choose between light, dark, or automatic system preference</span></label>
+								<label for="dark_mode">Theme<span><br>Choose a color theme for the extension</span></label>
 							</td>
 							<td>
 								<select id="dark_mode">
 									<option value="system" selected="selected">System (auto)</option>
 									<option value="light">Light</option>
-									<option value="dark">Dark</option>
+									<option value="dark">Dark (Midnight)</option>
+									<option value="solarized">Solarized Dark</option>
+									<option value="nord">Nord</option>
+									<option value="dracula">Dracula</option>
 								</select>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label for="icon_pack">Icon Pack<span><br>Choose button style for the torrent list</span></label>
+							</td>
+							<td>
+								<select id="icon_pack">
+									<option value="classic" selected="selected">Classic (original)</option>
+									<option value="modern">Modern (SVG glyphs)</option>
+								</select>
+								<div class="icon-preview">
+									<div class="table_cell_actions">
+										<a class="state" title="Pause"></a>
+										<a class="state resume" title="Resume"></a>
+										<a class="move_up" title="Move Up"></a>
+										<a class="move_down" title="Move Down"></a>
+										<a class="managed" title="Auto-managed on"></a>
+										<a class="unmanaged" title="Auto-managed off"></a>
+										<a class="force_recheck" title="Recheck"></a>
+										<a class="delete" title="Delete"></a>
+									</div>
+									<div style="display:inline-flex;gap:2px;margin-left:8px;padding-left:8px;border-left:1px solid #ccc;" class="delete-options">
+										<a class="rm_cancel" title="Cancel delete"></a>
+										<a class="rm_torrent" title="Remove torrent only"></a>
+										<a class="rm_torrent_data" title="Remove + data"></a>
+									</div>
+									<span class="icon-preview-label">preview</span>
+								</div>
 							</td>
 						</tr>
 					</table>
 				</fieldset>
-
 				<fieldset>
 					<legend>Extras</legend>
 					<table>
@@ -158,7 +225,6 @@
 						</tr>
 					</table>
 				</fieldset>
-
 				<div class="buttons">
 					<div class="left">
 						<button class="cancel">Cancel</button>
@@ -169,7 +235,6 @@
 					</div>
 					<div class="clr"></div>
 				</div>
-
 				<div class="buttons">
 					<div class="left">
 						<div class="clr"></div>

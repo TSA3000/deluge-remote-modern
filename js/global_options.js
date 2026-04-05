@@ -10,7 +10,8 @@ var ExtensionConfig = {
 	badge_timeout:    250,
 	refresh_interval: 3000,
 	debug_mode:       false,
-	dark_mode:        "system"
+	dark_mode:        "system",
+	icon_pack:        "classic"
 };
 
 chrome.storage.onChanged.addListener(function (changes, namespace) {
@@ -21,6 +22,9 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
 		}
 		if (key === "dark_mode") {
 			applyDarkMode(changes[key].newValue);
+		}
+		if (key === "icon_pack") {
+			applyIconPack(changes[key].newValue);
 		}
 	}
 });
@@ -34,17 +38,30 @@ chrome.storage.sync.get(function (items) {
 	if (typeof applyDarkMode === "function") {
 		applyDarkMode(ExtensionConfig.dark_mode);
 	}
+	if (typeof applyIconPack === "function") {
+		applyIconPack(ExtensionConfig.icon_pack);
+	}
 	document.dispatchEvent(new Event("ExtensionConfigReady"));
 });
 
 function applyDarkMode(mode) {
 	if (typeof document === "undefined") return;
 	var html = document.documentElement;
-	if (mode === "dark") {
-		html.setAttribute("data-theme", "dark");
-	} else if (mode === "light") {
-		html.setAttribute("data-theme", "light");
-	} else {
+	if (mode === "system") {
+		// Let CSS @media prefers-color-scheme handle it
 		html.removeAttribute("data-theme");
+	} else {
+		// Set any theme name: "light", "dark", "solarized", "nord", "dracula", etc.
+		html.setAttribute("data-theme", mode);
+	}
+}
+
+function applyIconPack(pack) {
+	if (typeof document === "undefined") return;
+	var html = document.documentElement;
+	if (pack === "modern") {
+		html.setAttribute("data-icons", "modern");
+	} else {
+		html.removeAttribute("data-icons");
 	}
 }

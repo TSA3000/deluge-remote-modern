@@ -1,50 +1,50 @@
+// Track the loaded password so we only re-encrypt when it actually changes
+var _originalPassword = "";
+var _storedEncryptedPassword = "";
+
 function saveOptions() {
 	var plainPassword = document.getElementById("password").value;
+	var passwordChanged = (plainPassword !== _originalPassword);
 
-	PasswordCrypto.encrypt(plainPassword).then(function (encryptedPassword) {
-		chrome.storage.sync.set(
-			{
-				"address_protocol":   document.getElementById("address_protocol").value,
-				"address_ip":         document.getElementById("address_ip").value,
-				"address_port":       document.getElementById("address_port").value,
-				"address_base":       document.getElementById("address_base").value,
-				"password":           encryptedPassword,
-				"handle_torrents":    document.getElementById("handle_torrents").checked,
-				"handle_magnets":     document.getElementById("handle_magnets").checked,
-				"context_menu":       document.getElementById("context_menu").checked,
-				"badge_timeout":      parseInt(document.getElementById("badge_timeout").value),
-				"refresh_interval":   parseInt(document.getElementById("refresh_interval").value),
-				"debug_mode":         document.getElementById("debug_mode").checked,
-				"dark_mode":          document.getElementById("dark_mode").value,
-				"version":            chrome.runtime.getManifest().version
-			},
-			function () {
-				debug_log("Settings saved (password encrypted)");
-			}
-		);
-	}).catch(function (err) {
-		console.error("Failed to encrypt password:", err);
-		chrome.storage.sync.set(
-			{
-				"address_protocol":   document.getElementById("address_protocol").value,
-				"address_ip":         document.getElementById("address_ip").value,
-				"address_port":       document.getElementById("address_port").value,
-				"address_base":       document.getElementById("address_base").value,
-				"password":           plainPassword,
-				"handle_torrents":    document.getElementById("handle_torrents").checked,
-				"handle_magnets":     document.getElementById("handle_magnets").checked,
-				"context_menu":       document.getElementById("context_menu").checked,
-				"badge_timeout":      parseInt(document.getElementById("badge_timeout").value),
-				"refresh_interval":   parseInt(document.getElementById("refresh_interval").value),
-				"debug_mode":         document.getElementById("debug_mode").checked,
-				"dark_mode":          document.getElementById("dark_mode").value,
-				"version":            chrome.runtime.getManifest().version
-			},
-			function () {
-				debug_log("Settings saved (plain text fallback)");
-			}
-		);
-	});
+	function doSave(passwordValue) {
+		var settings = {
+			"address_protocol":   document.getElementById("address_protocol").value,
+			"address_ip":         document.getElementById("address_ip").value,
+			"address_port":       document.getElementById("address_port").value,
+			"address_base":       document.getElementById("address_base").value,
+			"handle_torrents":    document.getElementById("handle_torrents").checked,
+			"handle_magnets":     document.getElementById("handle_magnets").checked,
+			"context_menu":       document.getElementById("context_menu").checked,
+			"badge_timeout":      parseInt(document.getElementById("badge_timeout").value),
+			"refresh_interval":   parseInt(document.getElementById("refresh_interval").value),
+			"debug_mode":         document.getElementById("debug_mode").checked,
+			"dark_mode":          document.getElementById("dark_mode").value,
+			"icon_pack":          document.getElementById("icon_pack").value,
+			"version":            chrome.runtime.getManifest().version
+		};
+
+		// Only include password if it changed
+		if (passwordChanged) {
+			settings.password = passwordValue;
+			_originalPassword = plainPassword;
+			_storedEncryptedPassword = passwordValue;
+		}
+
+		chrome.storage.sync.set(settings, function () {
+			debug_log("Settings saved" + (passwordChanged ? " (password encrypted)" : ""));
+		});
+	}
+
+	if (passwordChanged) {
+		PasswordCrypto.encrypt(plainPassword).then(function (encryptedPassword) {
+			doSave(encryptedPassword);
+		}).catch(function (err) {
+			console.error("Failed to encrypt password:", err);
+			doSave(plainPassword);
+		});
+	} else {
+		doSave(null);
+	}
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -59,6 +59,16 @@ document.addEventListener("DOMContentLoaded", function () {
 		window.close();
 	});
 	document.getElementById("version").textContent = chrome.runtime.getManifest().version;
+
+	// Live preview: theme change
+	document.getElementById("dark_mode").addEventListener("change", function () {
+		applyDarkMode(this.value);
+	});
+
+	// Live preview: icon pack change
+	document.getElementById("icon_pack").addEventListener("change", function () {
+		applyIconPack(this.value);
+	});
 });
 
 chrome.storage.onChanged.addListener(function (changes, namespace) {
@@ -107,6 +117,10 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
 				var dm = document.getElementById("dark_mode");
 				messages.push("Theme set to " + dm.options[dm.selectedIndex].text + ".");
 				break;
+			case "icon_pack":
+				var ip = document.getElementById("icon_pack");
+				messages.push("Icon pack set to " + ip.options[ip.selectedIndex].text + ".");
+				break;
 		}
 	}
 
@@ -132,10 +146,13 @@ chrome.storage.sync.get(function (items) {
 		if (!el) continue;
 
 		if (key === "password") {
+			_storedEncryptedPassword = items[key];
 			PasswordCrypto.decrypt(items[key]).then(function (plainPassword) {
 				document.getElementById("password").value = plainPassword;
+				_originalPassword = plainPassword;
 			}).catch(function () {
 				document.getElementById("password").value = "";
+				_originalPassword = "";
 			});
 		} else if (typeof items[key] === "boolean") {
 			el.checked = items[key];
