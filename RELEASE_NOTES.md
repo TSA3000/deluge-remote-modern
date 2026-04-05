@@ -2,6 +2,37 @@
 
 ---
 
+## v2.2.1 — Torrent Stats Polish
+*2026-04-05*
+
+### Bug Fixes
+
+- **Meaningless zero stats suppressed** — Ratio, ETA, Peers, Seeds, and Speed previously showed zeros (`0.00`, `∞`, `0/0`, `↓0.0 KiB/s`) for torrents that were Queued, Paused, Checking, or in Error state. These values are not meaningful when a torrent is not actively transferring. They now display `—` instead.
+
+- **ETA `∞` on queued torrents** — A queued torrent with no active connection was showing `∞` ETA. ETA is now only shown when the torrent is Downloading or Seeding.
+
+- **Speed row on inactive torrents** — Upload and download speeds now show `—` when the torrent is inactive and both speeds are zero. If a torrent is in an unexpected state but still transferring, speeds still display normally.
+
+- **Ratio `0.00` on fresh torrents** — Ratio now shows `—` when the value is zero or negative, which is the case for any torrent that hasn't uploaded anything yet.
+
+### Technical Details
+
+- Added `Torrent.prototype.isActive()` — returns `true` only for `Downloading` and `Seeding` states
+- `getRatio()` — returns `—` when `ratio <= 0`
+- `getEta()` — returns `—` when not active or `eta <= 0` (fixes the `∞` on queued torrents, replaces the old `&infin;` HTML entity with a proper em dash)
+- `getSpeeds()` — returns `—` when not active and both speeds are zero
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `js/torrent.js` | Added `isActive()`, updated `getRatio()`, `getEta()`, `getSpeeds()` |
+| `manifest.json` | Version bumped to `2.2.1` |
+| `RELEASE_NOTES.md` | This entry |
+| `README.md` | Version history updated |
+
+---
+
 ## v2.2.0 — Icon Pack System
 *2026-04-05*
 

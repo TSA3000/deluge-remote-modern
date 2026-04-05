@@ -97,9 +97,9 @@ Torrent.prototype.getEta = function () {
 		, time = this.eta;
 
 	if (!this.isActive() || time <= 0) {
-	return '&infin;';
+		return '—';
 	}
-
+	
 	time = time.toFixed(0);
 	if (time < 60) {
 		return time + 's';

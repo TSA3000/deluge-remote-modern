@@ -131,6 +131,11 @@ SVG glyphs rendered via CSS `mask-image`. Each icon uses semantic colors that ad
 
 ## Version History
 
+**2026-04-05 v2.2.1 — Torrent Stats Polish**
+- Ratio, ETA, Peers, Seeds and Speed now show `—` instead of zero values for inactive torrents (Queued, Paused, Checking, Error)
+- ETA no longer shows `∞` on queued torrents
+- Speed row hidden when torrent is not actively transferring
+
 **2026-04-05 v2.2.0 — Icon Pack System**
 - Selectable icon packs in Options → Appearance (Classic and Modern)
 - Modern pack: SVG glyphs with theme-aware semantic colors, live preview in Options
