@@ -19,7 +19,7 @@
 
 - Added `Torrent.prototype.isActive()` — returns `true` only for `Downloading` and `Seeding` states
 - `getRatio()` — returns `—` when `ratio <= 0`
-- `getEta()` — returns `—` when not active or `eta <= 0` (fixes the `∞` on queued torrents, replaces the old `&infin;` HTML entity with a proper em dash)
+- `getEta()` — returns `—` when not active or `eta <= 0` (fixes the `∞` on queued torrents, replaces the old `&infin;` HTML entity with a proper `—` dash)
 - `getSpeeds()` — returns `—` when not active and both speeds are zero
 
 ### Files Changed
@@ -82,7 +82,7 @@
 | `css/popup.css` | Removed bare icon background-image rules |
 | `js/global_options.js` | Added `icon_pack: "classic"` default, `applyIconPack()`, change listener |
 | `js/options.js` | Save/load `icon_pack`, live preview on change, status message |
-| `options.html` | Icon Pack row in Appearance fieldset + live preview strip + CSS links |
+| `options.html` | Icon Pack row in Appearance `<fieldset>` + live preview strip + CSS links |
 | `popup.html` | Added icon-pack CSS `<link>` tags |
 | `manifest.json` | Version bumped to `2.2.0` |
 | `RELEASE_NOTES.md` | This entry |
