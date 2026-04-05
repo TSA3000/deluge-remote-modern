@@ -61,6 +61,20 @@ This project is a fork of [chrome-deluge-remote](https://github.com/YodaDaCoda/c
 
 ## Version History
 
+2026-04-05 v2.2.0
+
+- Added selectable Icon Packs in Options → Appearance
+- Classic pack: original PNG icons (default, zero disruption for existing users)
+- Modern pack: SVG glyphs using CSS mask-image — theme-aware colors that adapt to Dark, Nord, Dracula, Solarized automatically
+- Live icon preview strip in Options page updates as you switch packs and themes
+
+2026-04-05 v2.1.0
+
+- Replaced `darkmode.css` with a full CSS custom-property theme engine
+- Added four built-in themes: Dark (Midnight Blue), Solarized Dark, Nord, and Dracula
+- Theme architecture is now fully extensible — new themes require only a single CSS file
+- System auto mode maps cleanly to theme variables via `@media (prefers-color-scheme: dark)`
+
 2026-04-03 v2.0.9
 
 - Removed unnecessary `tabs` permission to comply with Chrome Web Store policies.
