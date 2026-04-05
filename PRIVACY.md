@@ -35,7 +35,7 @@ The extension only makes network requests to the Deluge Web UI server address th
 
 ## Authentication
 
-The extension stores your Deluge Web UI password using AES-256-GCM encryption. The encryption key is generated per-installation and stored locally on your device. 
+The extension stores your Deluge Web UI password using AES-256-GCM encryption. The encryption key is generated per-installation and stored locally on your device.
 
 ## Open Source
 

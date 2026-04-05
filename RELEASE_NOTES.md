@@ -17,7 +17,7 @@
 
 | File | Change |
 | --- | --- |
-| `manifest.jsonl` | Removed `tabs` permission|
+| `manifest.jsonl` | Removed `tabs` permission |
 | `js/global_options.js` | Changed refresh_interval to 3000 "3 seconds" |
 
 ---
