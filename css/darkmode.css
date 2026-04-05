@@ -41,7 +41,7 @@
 	--dm-progress-download: #60a5fa;
 	--dm-progress-seed:     #4ade80;
 	--dm-progress-pause:    #6b7280;
-	--dm-progress-queued:   #fbbf24;
+	--dm-progress-queued:   #e2e61c;
 	--dm-progress-check:    #a78bfa;
 	--dm-progress-finished: #34d399;
 	--dm-progress-error:    #f87171;
@@ -261,9 +261,10 @@ html[data-theme="dark"] body {
 	background: var(--dm-progress-error) !important;
 	border-color: var(--dm-progress-error) !important;
 }
-
-[data-theme="dark"] .progress_bar .inner.finished:not(.Error):not(.Paused) {
-	background: var(--dm-progress-finished) !important;
+/*[data-theme="dark"] .progress_bar .inner.finished:not(.Error):not(.Paused) {
+*/
+[data-theme="dark"] .progress_bar .inner.finished:not(.Error):not(.Paused):not(.Queued):not(.que) {
+  background: var(--dm-progress-finished) !important;
 	border-color: var(--dm-progress-finished) !important;
 }
 
@@ -558,8 +559,10 @@ html[data-theme="dark"] body {
 		border-color: var(--dm-progress-error) !important;
 	}
 
-	html:not([data-theme="light"]) .progress_bar .inner.finished:not(.Error):not(.Paused) {
-		background: var(--dm-progress-finished) !important;
+	/*html:not([data-theme="light"]) .progress_bar .inner.finished:not(.Error):not(.Paused) {
+	*/
+  html:not([data-theme="light"]) .progress_bar .inner.finished:not(.Error):not(.Paused):not(.Queued):not(.que) {
+  background: var(--dm-progress-finished) !important;
 		border-color: var(--dm-progress-finished) !important;
 	}
 
