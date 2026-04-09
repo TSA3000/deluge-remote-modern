@@ -140,6 +140,15 @@ SVG glyphs rendered via CSS `mask-image`. Each icon uses semantic colors that ad
 
 ## Version History
 
+### 2026-04-09 v2.3.0 — First Install & Options Save Fixes
+
+- Fixed OK button closing window before settings saved (async race condition)
+- Fixed form fields using placeholder instead of value (first save stored empty strings)
+- Fixed default refresh interval showing 1s instead of 3s
+- Fixed double options tab opening on first install
+- Fixed auto-save overwriting user settings with empty defaults on first install
+- Added error handling to chrome.runtime.sendMessage()
+
 ### 2026-04-09 v2.2.2 — Project Cleanup & Image Reorganization
 
 - Reorganized images into `images/classic/` and `images/modern/` icon pack folders

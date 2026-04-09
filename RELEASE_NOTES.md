@@ -2,6 +2,38 @@
 
 ---
 
+## v2.3.0 — First Install & Options Save Fixes
+*2026-04-09*
+
+### Bug Fixes
+
+- **Options not saving on OK** — Pressing OK closed the window before `chrome.storage.sync.set()` finished writing. The save is now async-safe — `window.close()` waits for the storage callback to complete.
+
+- **Form fields appearing empty** — Address, port, and base path inputs used `placeholder` attributes instead of `value`, so they looked filled but were actually empty. First save would store empty strings. Added real default `value` attributes to match the placeholders.
+
+- **Default refresh interval** — The HTML dropdown had `1s` pre-selected instead of `3s`, contradicting the JS default. Fixed the `selected` attribute in `options.html`.
+
+- **Double options tab on install** — `start()` was called both from `onInstalled` and at the top level of `background.js`, opening two options tabs on first install. Removed the redundant top-level `start()` call.
+
+- **Auto-save overwriting on first install** — The `?newver=true` auto-save ran even on first install when storage was empty, saving blank defaults. It now only runs on version upgrades when existing settings are present.
+
+- **Unhandled sendMessage error** — `chrome.runtime.sendMessage()` in `global_options.js` had no error handling. If the service worker was sleeping, this threw an uncaught rejection. Added `.catch()`.
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `js/options.js` | `saveOptions()` accepts callback; `?newver=true` only auto-saves on upgrade |
+| `js/global_options.js` | Added `.catch()` to `chrome.runtime.sendMessage()` |
+| `js/background.js` | Removed duplicate top-level `start()` call |
+| `options.html` | Added `value` attributes to inputs; fixed refresh interval `selected`; `type="button"` on buttons |
+| `manifest.json` | Version bumped to `2.3.0` |
+| `RELEASE_NOTES.md` | This entry |
+| `README.md` | Version history updated |
+
+---
+
+
 ## v2.2.2 — Project Cleanup & Image Reorganization
 *2026-04-09*
 

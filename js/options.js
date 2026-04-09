@@ -2,25 +2,25 @@
 var _originalPassword = "";
 var _storedEncryptedPassword = "";
 
-function saveOptions() {
+function saveOptions(callback) {
 	var plainPassword = document.getElementById("password").value;
 	var passwordChanged = (plainPassword !== _originalPassword);
 
 	function doSave(passwordValue) {
 		var settings = {
-			"address_protocol":   document.getElementById("address_protocol").value,
-			"address_ip":         document.getElementById("address_ip").value,
-			"address_port":       document.getElementById("address_port").value,
-			"address_base":       document.getElementById("address_base").value,
-			"handle_torrents":    document.getElementById("handle_torrents").checked,
-			"handle_magnets":     document.getElementById("handle_magnets").checked,
-			"context_menu":       document.getElementById("context_menu").checked,
-			"badge_timeout":      parseInt(document.getElementById("badge_timeout").value),
-			"refresh_interval":   parseInt(document.getElementById("refresh_interval").value),
-			"debug_mode":         document.getElementById("debug_mode").checked,
-			"dark_mode":          document.getElementById("dark_mode").value,
-			"icon_pack":          document.getElementById("icon_pack").value,
-			"version":            chrome.runtime.getManifest().version
+			"address_protocol": document.getElementById("address_protocol").value,
+			"address_ip": document.getElementById("address_ip").value,
+			"address_port": document.getElementById("address_port").value,
+			"address_base": document.getElementById("address_base").value,
+			"handle_torrents": document.getElementById("handle_torrents").checked,
+			"handle_magnets": document.getElementById("handle_magnets").checked,
+			"context_menu": document.getElementById("context_menu").checked,
+			"badge_timeout": parseInt(document.getElementById("badge_timeout").value),
+			"refresh_interval": parseInt(document.getElementById("refresh_interval").value),
+			"debug_mode": document.getElementById("debug_mode").checked,
+			"dark_mode": document.getElementById("dark_mode").value,
+			"icon_pack": document.getElementById("icon_pack").value,
+			"version": chrome.runtime.getManifest().version
 		};
 
 		// Only include password if it changed
@@ -32,6 +32,7 @@ function saveOptions() {
 
 		chrome.storage.sync.set(settings, function () {
 			debug_log("Settings saved" + (passwordChanged ? " (password encrypted)" : ""));
+			if (callback) callback();
 		});
 	}
 
@@ -52,8 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		saveOptions();
 	});
 	document.querySelector(".buttons .apply").addEventListener("click", function () {
-		saveOptions();
-		window.close();
+		saveOptions(function () { window.close(); });
 	});
 	document.querySelector(".buttons .cancel").addEventListener("click", function () {
 		window.close();
@@ -161,8 +161,8 @@ chrome.storage.sync.get(function (items) {
 		}
 	}
 
-	if (window.location.search === "?newver=true") {
-		debug_log("New version. Saving settings.");
+	if (window.location.search === "?newver=true" && Object.keys(items).length > 0) {
+		debug_log("Version upgrade. Re-saving settings.");
 		saveOptions();
 	}
 });

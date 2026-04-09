@@ -416,5 +416,3 @@ async function start() {
 chrome.runtime.onInstalled.addListener(() => {
 	start();
 });
-
-start();
