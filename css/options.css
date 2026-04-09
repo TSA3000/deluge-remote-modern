@@ -1,3 +1,7 @@
+/* =====================================================================
+   options.css — Settings page layout and form styles
+   ===================================================================== */
+
 body {
 	width: 100%;
 	color: #000000;
@@ -10,6 +14,7 @@ body {
 	border: 1px solid #CCC;
 	padding: 5px;
 }
+
 #options {
 	width: 600px;
 	margin: 0 auto;
@@ -19,6 +24,7 @@ body {
 	margin-left: auto;
 	margin-right: auto;
 }
+
 label span {
 	font-size: 75%;
 }
@@ -29,24 +35,22 @@ table tr td:nth-child(1) {
 	text-align: right;
 }
 
+/* ── Save / Reset Buttons ────────────────────────────────────────────── */
+
 .buttons {
 	margin-top: 10px;
 }
+
 .buttons .left {
 	float: left;
 }
+
 .buttons .right {
 	float: right;
 }
 
-div#logo span {
-	display:inline-block;
-}
+/* ── Logo ────────────────────────────────────────────────────────────── */
 
-.e1f605 {
-	background: url('https://cdnjs.cloudflare.com/ajax/libs/emojione/2.2.2/assets/png/1f605.png');
-	background-size: contain;
-	height: 20px;
-	width: 20px;
-	display:inline-block;
+div#logo span {
+	display: inline-block;
 }

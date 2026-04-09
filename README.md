@@ -140,6 +140,13 @@ SVG glyphs rendered via CSS `mask-image`. Each icon uses semantic colors that ad
 
 ## Version History
 
+### 2026-04-09 v2.2.2 — Project Cleanup & Image Reorganization
+
+- Reorganized images into `images/classic/` and `images/modern/` icon pack folders
+- Fixed 6 broken CSS image paths pointing to deleted `/themes/standard/images/`
+- Removed dead CSS selectors and unused files (darkmode.css, Deluge.Formatters.js, stray copies)
+- Deleted 5 unused image files
+
 ### 2026-04-05 v2.2.1 — Torrent Stats Polish
 
 - Ratio, ETA, Peers, Seeds and Speed now show `—` instead of zero values for inactive torrents (Queued, Paused, Checking, Error)

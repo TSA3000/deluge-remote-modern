@@ -1,3 +1,7 @@
+/* =====================================================================
+   popup.css — Popup window layout, torrent rows, progress bars
+   ===================================================================== */
+
 html {
 	width: 560px;
 }
@@ -7,6 +11,8 @@ body {
 	font-family: "MS Trebuchet", Arial, Helvetica, sans-serif;
 	font-size: 62.5%;
 }
+
+/* ── Overlay & Dialog ────────────────────────────────────────────────── */
 
 #overlay, .dialog {
 	background: rgba(0, 0, 0, 0.9);
@@ -25,7 +31,7 @@ body {
 	border-bottom-left-radius: 5px;
 	border-bottom-right-radius: 5px;
 	display: table;
- /* Allows us to shrink to content and centre with auto margin */
+	/* Allows us to shrink to content and centre with auto margin */
 	line-height: 16px;
 	margin: 0 auto;
 	padding: 1em;
@@ -37,13 +43,15 @@ body {
 }
 
 #overlay .overlay_inner .error {
-	background: url(/themes/standard/images/error.png) no-repeat left top;
+	background: url(/images/error.png) no-repeat left top;
 	display: inline-block;
 	height: 24px;
 	line-height: 24px;
 	padding-left: 35px;
 	vertical-align: middle;
 }
+
+/* ── Global Information Bar ──────────────────────────────────────────── */
 
 #global-information {
 	position: absolute;
@@ -60,13 +68,14 @@ body {
 }
 
 #deluge_webui_link {
-	display:inline-block;
-	border:0;
+	display: inline-block;
+	border: 0;
 }
 
+/* ── Filters Bar ─────────────────────────────────────────────────────── */
 
 #filters {
-	display:block;
+	display: block;
 	border-spacing: 0;
 	font-size: 1.2em;
 	width: 552px;
@@ -78,6 +87,8 @@ body {
 	border-top-left-radius: 5px;
 	border-top-right-radius: 5px;
 }
+
+/* ── Torrent Container & Rows ────────────────────────────────────────── */
 
 #torrent_container {
 	border: 1px solid #CCC;
@@ -102,13 +113,16 @@ body {
 	width: 100%;
 }
 
+/* ── Table Cells ─────────────────────────────────────────────────────── */
+
 .table_cell_position {
 	width: 25px;
 }
+
 .table_cell_name {
 	width: 100%;
 	font-weight: bold;
-	font-size:	9pt;
+	font-size: 9pt;
 	word-break: break-all;
 }
 
@@ -118,11 +132,11 @@ body {
 }
 
 .table_cell_eta {
-	text-align:	left;
+	text-align: left;
 }
 
 .table_cell_speed {
-	text-align:	right;
+	text-align: right;
 }
 
 .table_cell_actions {
@@ -131,6 +145,13 @@ body {
 	right: 5px;
 }
 
+/* ── Progress Bars ───────────────────────────────────────────────────── */
+
+.progress_bar {
+	background: #CCC;
+	position: relative;
+	width: 100%;
+}
 
 .progress_bar span {
 	color: #FFF;
@@ -146,19 +167,13 @@ body {
 	text-shadow: 0px 0px 3px #000, 0px 0px 3px #000, 0px 0px 3px #000;
 }
 
-.progress_bar {
-	background: #CCC;
-	position: relative;
-	width: 100%;
-}
-
 .progress_bar .inner {
 	height: 17px;
 	width: 0%;
 	text-align: center;
 }
 
-.progress_bar .inner.Queued {	/* Queued is yellowish */
+.progress_bar .inner.Queued {
 	background: linear-gradient(to bottom, #D9D300 50%, #BFBA14 50%, #D9D300);
 	border: 1px solid #ACA712;
 	border-right: none;
@@ -167,7 +182,7 @@ body {
 	border: 1px solid #ACA712;
 }
 
-.progress_bar .inner.Paused {	/* Paused is grey */
+.progress_bar .inner.Paused {
 	background: linear-gradient(to bottom, #C0C0C0 50%, #9A9A9A 50%, #C0C0C0);
 	border: 1px solid #8B8B8B;
 	border-right: none;
@@ -176,13 +191,13 @@ body {
 	border: 1px solid #8B8B8B;
 }
 
-.progress_bar .inner.Downloading {	/* Downloading is green */
+.progress_bar .inner.Downloading {
 	background: linear-gradient(to bottom, #45E25D 50%, #3EC953 50%, #45E25D);
 	border: 1px solid #29AD35;
 	border-right: none;
 }
 
-.progress_bar .inner.Error {	/* Error is red */
+.progress_bar .inner.Error {
 	background: linear-gradient(to bottom, #CC0000 50%, #990000 50%, #CC0000);
 	border: 1px solid #FF0000;
 	border-right: none;
@@ -191,17 +206,18 @@ body {
 	border: 1px solid #FF0000;
 }
 
-.progress_bar .inner.Seeding {	/* Seeding is blue */
+.progress_bar .inner.Seeding {
 	background: linear-gradient(to bottom, #A7BFCA 50%, #80A3B2 50%, #A7BFCA);
 	border: 1px solid #8B8B8B;
 }
 
-.progress_bar .inner.Checking {	/* Checking is grey */
+.progress_bar .inner.Checking {
 	background: linear-gradient(to bottom, #ADADAD 50%, #999999 50%, #ADADAD);
 	border: 1px solid #8A8A8A;
 }
 
-
+/* ── Action Buttons (base styles) ────────────────────────────────────── */
+/* Icon backgrounds are set by css/icon-pack-classic.css or css/icon-pack-modern.css */
 
 .table_cell_actions a {
 	border: 0;
@@ -211,6 +227,3 @@ body {
 	margin: 0 1px;
 	width: 16px;
 }
-
-/* Icon backgrounds are managed by css/icon-pack-classic.css and css/icon-pack-modern.css */
-

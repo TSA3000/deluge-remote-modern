@@ -2,6 +2,55 @@
 
 ---
 
+## v2.2.2 — Project Cleanup & Image Reorganization
+*2026-04-09*
+
+### Improvements
+
+- **Image folder reorganization** — Action icons are now organized into separate icon pack folders for clarity and maintainability:
+  - `images/classic/` — Original PNG action icons (Classic icon pack)
+  - `images/modern/` — SVG action icons (Modern icon pack, renamed from `glyphs/`)
+  - `images/icons/` — Extension toolbar and manifest icons (unchanged)
+  - Shared UI icons (`close.png`, `error.png`, `add_torrent.png`) remain in `images/`
+
+### Bug Fixes
+
+- **Broken image paths** — Fixed 6 CSS references still pointing to the deleted `/themes/standard/images/` folder. `close.png` and `error.png` paths now correctly point to `/images/`.
+
+### Dead Code Removed
+
+- **`css/master.css`** — Removed `#mass-buttons` block (not used in HTML), `#table_header_speed`, `#table_header_actions`, `table#torrent_table`, `.sortable`, and `.sorted` selectors
+- **`css/icon-pack-classic.css`** — Updated all image paths from `/images/` to `/images/classic/`
+
+### Files Deleted
+
+| File | Reason |
+|---|---|
+| `js/popup.css` | Stray copy — duplicate of `css/popup.css` |
+| `js/theme-base.css` | Stray copy — duplicate of `css/theme-base.css` |
+| `css/darkmode.css` | Replaced by theme engine in v2.1.0 |
+| `js/Deluge.Formatters.js` | Not referenced anywhere |
+| `images/asc.png` | Unused |
+| `images/bottom.png` | Unused |
+| `images/desc.png` | Unused |
+| `images/top.png` | Unused |
+| `images/deluge.png` | Unused (extension uses `images/icons/deluge.png`) |
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `css/master.css` | Fixed `close.png` path, removed all dead CSS selectors |
+| `css/popup.css` | Fixed `error.png` path from `/themes/standard/images/` to `/images/` |
+| `css/icon-pack-classic.css` | All paths updated to `/images/classic/` |
+| `images/classic/` | **NEW** folder — 11 action PNGs moved here |
+| `images/modern/` | **RENAMED** from `images/glyphs/` |
+| `manifest.json` | Version bumped to `2.2.2` |
+| `RELEASE_NOTES.md` | This entry |
+| `README.md` | Version history updated |
+
+---
+
 ## v2.2.1 — Torrent Stats Polish
 *2026-04-05*
 

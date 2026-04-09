@@ -1,3 +1,7 @@
+/* =====================================================================
+   master.css — Global styles shared by popup and options pages
+   ===================================================================== */
+
 body {
 	color: #373737;
 	margin: 0;
@@ -5,11 +9,22 @@ body {
 	width: 780px;
 	overflow-x: hidden;
 }
+
 a {
 	border-bottom: 1px dotted #BBBBBB;
 	color: #425570;
 	text-decoration: none;
 }
+
+a:hover {
+	color: #000000;
+}
+
+.clr {
+	clear: both;
+}
+
+/* ── Add Torrent Dialog ──────────────────────────────────────────────── */
 
 .dialog .inner {
 	margin: 20px auto 0 auto;
@@ -34,7 +49,7 @@ a {
 .dialog .header .close {
 	position: absolute;
 	right: 5px;
-	background: url(/themes/standard/images/close.png?1) no-repeat left top;
+	background: url(/images/close.png) no-repeat left top;
 	border: 0;
 	width: 16px;
 	height: 16px;
@@ -61,6 +76,8 @@ a {
 	border: 1px solid #AAA;
 }
 
+/* ── Add Torrent Button (top-right + icon) ───────────────────────────── */
+
 #add-torrent {
 	border: 0;
 	background: url(/images/add_torrent.png) no-repeat left top;
@@ -76,6 +93,8 @@ a {
 	display: none;
 }
 
+/* ── Logo ────────────────────────────────────────────────────────────── */
+
 #logo {
 	margin: 3px;
 }
@@ -83,92 +102,4 @@ a {
 #logo span {
 	font-weight: bold;
 	font-size: 2em;
-}
-
-.table_cell_size {
-	text-align: center;
-}
-
-#table_header_speed {
-	width: 150px;
-}
-
-.table_cell_speed {
-	text-align: center;
-}
-
-#table_header_actions {
-	width: 130px;
-}
-
-.table_cell_actions {
-	text-align: center;
-}
-
-table#torrent_table tbody tr:nth-child(even) {
-	background: #F4F4F4;
-}
-
-table#torrent_table tbody tr td {
-	padding: 5px 3px;
-}
-
-a:hover {
-	color: #000000;
-}
-
-.clr {
-	clear: both;
-}
-
-#mass-buttons {
-	padding: 10px;
-	font-size: 1.1em;
-	color: darkRed;
-	font-weight: bold;
-}
-
-#mass-buttons a {
-	border: 0;
-	cursor: pointer;
-	display: inline-block;
-	height: 16px;
-	margin: 0 1px;
-	width: 16px;
-}
-
-#mass-buttons a.state {
-	background: url(/themes/standard/images/state.png) no-repeat top left;
-}
-
-#mass-buttons a.state.resume {
-	background-position: 0 -66px;
-	width: 16px;
-	height: 16px;
-}
-
-#mass-buttons a.state.pause {
-	background-position: 0 0;
-	width: 16px;
-	height: 16px;
-}
-
-#mass-buttons a.delete {
-	background: url(/themes/standard/images/remove.png) no-repeat left top;
-}
-
-#mass-buttons a.data {
-	background: url(/themes/standard/images/trash.png) no-repeat left top;
-}
-
-#mass-buttons a.torrent {
-	background: url(/themes/standard/images/database.png) no-repeat left top;
-}
-
-.sortable:hover {
-	cursor: pointer;
-}
-
-.sorted {
-	color: darkRed;
 }
