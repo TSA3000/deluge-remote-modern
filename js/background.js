@@ -16,7 +16,7 @@ let ExtensionConfig = {
 	handle_torrents:  true,
 	context_menu:     false,
 	badge_timeout:    250,
-	refresh_interval: 1000,
+	refresh_interval: 3000,
 	debug_mode:       false,
 	dark_mode:        "system"
 };
@@ -398,13 +398,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ── Startup ─────────────────────────────────────────────────────────────────
-async function start() {
+async function start(allowOpenOptions) {
 	await loadConfig();
 
 	const manifest = chrome.runtime.getManifest();
 	if (
-		typeof ExtensionConfig.version === "undefined" ||
-		manifest.version.split(".")[0] !== (ExtensionConfig.version || "").split(".")[0]
+		allowOpenOptions && (
+			typeof ExtensionConfig.version === "undefined" ||
+			manifest.version.split(".")[0] !== (ExtensionConfig.version || "").split(".")[0]
+		)
 	) {
 		chrome.tabs.create({ url: "options.html?newver=true" });
 	}
@@ -414,5 +416,7 @@ async function start() {
 }
 
 chrome.runtime.onInstalled.addListener(() => {
-	start();
+	start(true);
 });
+
+start(false);

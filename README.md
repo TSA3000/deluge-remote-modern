@@ -140,13 +140,18 @@ SVG glyphs rendered via CSS `mask-image`. Each icon uses semantic colors that ad
 
 ## Version History
 
+### 2026-04-09 v2.3.1 — Service Worker & Default Sync Fix
+
+- Fixed login broken after v2.3.0 — re-added `start(false)` with `allowOpenOptions` parameter so service worker loads config on wake-up
+- Synced refresh interval default to 3s in background.js (was 1s, mismatched with frontend)
+
 ### 2026-04-09 v2.3.0 — First Install & Options Save Fixes
 
-- Fixed OK button closing window before settings saved (async race condition)
-- Fixed form fields using placeholder instead of value (first save stored empty strings)
-- Fixed default refresh interval showing 1s instead of 3s
-- Fixed double options tab opening on first install
-- Fixed auto-save overwriting user settings with empty defaults on first install
+- Fixed OK button closing before settings saved (async race condition)
+- Fixed form fields using placeholder instead of value (empty on first save)
+- Fixed default refresh interval showing 1s instead of 3s in dropdown
+- Fixed double options tab on first install
+- Fixed auto-save overwriting settings with empty defaults on first install
 - Added error handling to chrome.runtime.sendMessage()
 
 ### 2026-04-09 v2.2.2 — Project Cleanup & Image Reorganization

@@ -2,6 +2,25 @@
 
 ---
 
+## v2.3.1 — Service Worker & Default Sync Fix
+*2026-04-09*
+
+### Bug Fixes
+
+- **Login broken after v2.3.0** — Removing the bare `start()` call in v2.3.0 meant `loadConfig()` never ran when the service worker woke up, so the extension had empty credentials and could not connect. Re-added `start(false)` for normal wake-ups alongside `start(true)` for installs/updates via the `allowOpenOptions` parameter.
+
+- **Mismatched refresh interval default** — `background.js` had `refresh_interval: 1000` while `global_options.js` and `options.html` used `3000`. Synced to `3000` everywhere.
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `js/background.js` | `start()` accepts `allowOpenOptions`; `onInstalled` calls `start(true)`, bare call uses `start(false)`; `refresh_interval` default changed to `3000` |
+| `manifest.json` | Version bumped to `2.3.1` |
+| `RELEASE_NOTES.md` | This entry |
+| `README.md` | Version history updated |
+---
+
 ## v2.3.0 — First Install & Options Save Fixes
 *2026-04-09*
 
@@ -13,7 +32,7 @@
 
 - **Default refresh interval** — The HTML dropdown had `1s` pre-selected instead of `3s`, contradicting the JS default. Fixed the `selected` attribute in `options.html`.
 
-- **Double options tab on install** — `start()` was called both from `onInstalled` and at the top level of `background.js`, opening two options tabs on first install. Removed the redundant top-level `start()` call.
+- **Double options tab on install** — `start()` was called identically from both `onInstalled` and at the top level, causing two options tabs to open on first install. Added `allowOpenOptions` parameter so `onInstalled` calls `start(true)` (may open options tab) while the bare startup calls `start(false)` (loads config and connects only).
 
 - **Auto-save overwriting on first install** — The `?newver=true` auto-save ran even on first install when storage was empty, saving blank defaults. It now only runs on version upgrades when existing settings are present.
 
@@ -25,14 +44,13 @@
 |---|---|
 | `js/options.js` | `saveOptions()` accepts callback; `?newver=true` only auto-saves on upgrade |
 | `js/global_options.js` | Added `.catch()` to `chrome.runtime.sendMessage()` |
-| `js/background.js` | Removed duplicate top-level `start()` call |
+| `js/background.js` | `start()` accepts `allowOpenOptions`; `onInstalled` calls `start(true)`, bare call uses `start(false)` |
 | `options.html` | Added `value` attributes to inputs; fixed refresh interval `selected`; `type="button"` on buttons |
 | `manifest.json` | Version bumped to `2.3.0` |
 | `RELEASE_NOTES.md` | This entry |
 | `README.md` | Version history updated |
 
 ---
-
 
 ## v2.2.2 — Project Cleanup & Image Reorganization
 *2026-04-09*
