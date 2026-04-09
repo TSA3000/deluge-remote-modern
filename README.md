@@ -2,7 +2,7 @@
 
 [![GitHub release](https://img.shields.io/github/release/TSA3000/deluge-remote-modern.svg)](https://github.com/TSA3000/deluge-remote-modern/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](MIT-LICENSE)
-[![Chrome Web Store](https://img.shields.io/badge/Chrome-Web%20Store-4285F4?logo=google-chrome&logoColor=white)](https://chromewebstore.google.com)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome-Web%20Store-4285F4?logo=google-chrome&logoColor=white)](https://chrome.google.com/webstore/detail/okjmppgdfmooahhabhcdjdhnmnkgkila)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-green.svg)](https://developer.chrome.com/docs/extensions/mv3/intro/)
 
 A lightweight, open-source Chrome extension to manage your [Deluge](https://deluge-torrent.org/) BitTorrent client directly from your browser. A complete modern fork of the original [Remote Deluge](https://github.com/YodaDaCoda/chrome-deluge-remote), fully rebuilt for Manifest V3 with themes, icon packs, password encryption, and vanilla JS.
