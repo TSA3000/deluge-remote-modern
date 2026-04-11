@@ -69,6 +69,39 @@ document.addEventListener("DOMContentLoaded", function () {
 	document.getElementById("icon_pack").addEventListener("change", function () {
 		applyIconPack(this.value);
 	});
+
+	// Test connection button
+	document.getElementById("test_connection").addEventListener("click", function () {
+		var btn = this;
+		var result = document.getElementById("test_result");
+		btn.disabled = true;
+		result.textContent = "Testing...";
+		result.style.color = "#888";
+
+		saveOptions(function () {
+			chrome.runtime.sendMessage({ method: "check_status" }, function (response) {
+				btn.disabled = false;
+				if (chrome.runtime.lastError) {
+					result.textContent = "✗ Service worker not responding";
+					result.style.color = "#e74c3c";
+					return;
+				}
+				if (response && response.connected) {
+					result.textContent = "✓ Connected!";
+					result.style.color = "#27ae60";
+				} else if (response && response.reason === "auth_failed") {
+					result.textContent = "✗ Login failed — check password";
+					result.style.color = "#e74c3c";
+				} else if (response && response.reason === "network_error") {
+					result.textContent = "✗ Cannot reach server — check address";
+					result.style.color = "#e74c3c";
+				} else {
+					result.textContent = "✗ Connection failed";
+					result.style.color = "#e74c3c";
+				}
+			});
+		});
+	});
 });
 
 chrome.storage.onChanged.addListener(function (changes, namespace) {

@@ -2,6 +2,27 @@
 
 ---
 
+## v2.4.0 — Test Connection Button
+*2026-04-11*
+
+### New Features
+
+- **Test Connection button** — Added a "Test Connection" button to the Options page under Basic Setup. Saves current settings, then checks connectivity to the Deluge Web UI and displays the result: connected, login failed, or unreachable. No more guessing whether the address/password is correct.
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `options.html` | Added Test Connection button and result span after password row |
+| `js/options.js` | Test handler: saves settings, sends `check_status`, shows result |
+| `css/options.css` | Styling for test button and result text |
+| `manifest.json` | Version bumped to `2.4.0` |
+| `RELEASE_NOTES.md` | This entry |
+| `README.md` | Version history updated |
+
+---
+
+
 ## v2.3.1 — Service Worker & Default Sync Fix
 *2026-04-09*
 
@@ -45,7 +66,7 @@
 | `js/options.js` | `saveOptions()` accepts callback; `?newver=true` only auto-saves on upgrade |
 | `js/global_options.js` | Added `.catch()` to `chrome.runtime.sendMessage()` |
 | `js/background.js` | `start()` accepts `allowOpenOptions`; `onInstalled` calls `start(true)`, bare call uses `start(false)` |
-| `options.html` | Added `value` attributes to inputs; fixed refresh interval `selected`; `type="button"` on buttons |
+| `options.html` | Added `value` attrs to inputs; fixed refresh interval `selected`; `type="button"` on buttons |
 | `manifest.json` | Version bumped to `2.3.0` |
 | `RELEASE_NOTES.md` | This entry |
 | `README.md` | Version history updated |

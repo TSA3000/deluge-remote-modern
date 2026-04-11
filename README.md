@@ -140,6 +140,11 @@ SVG glyphs rendered via CSS `mask-image`. Each icon uses semantic colors that ad
 
 ## Version History
 
+### 2026-04-11 v2.4.0 — Test Connection Button
+
+- Added "Test Connection" button to Options page — saves settings and verifies connectivity
+- Shows clear result: connected, login failed, or server unreachable
+
 ### 2026-04-09 v2.3.1 — Service Worker & Default Sync Fix
 
 - Fixed login broken after v2.3.0 — re-added `start(false)` with `allowOpenOptions` parameter so service worker loads config on wake-up
