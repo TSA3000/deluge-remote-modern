@@ -15,6 +15,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 	var cachedLabelOptionsHtml = '<option value="">(No Label)</option>';
 	var lastLabelHash = "";
+	// Pagination
+	var currentPage = 0;
+	var totalPages = 1;
+	var TORRENTS_PER_PAGE = ExtensionConfig.torrents_per_page || 0;
 
 	function rebuildLabelOptions() {
 		var labels = Torrents.getLabels();
@@ -37,35 +41,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
 		return '<div class="torrent_row" data-id="' + torrent.id + '">' +
 			'<table><tr>' +
-				'<td class="table_cell_position">' + torrent.getPosition() + '</td>' +
-				'<td class="table_cell_name">' + torrent.name + '</td>' +
+			'<td class="table_cell_position">' + torrent.getPosition() + '</td>' +
+			'<td class="table_cell_name">' + torrent.name + '</td>' +
 			'</tr></table>' +
 			'<table><tr>' +
-				'<td class="table_cell_size">' + sizeText + '</td>' +
-				'<td class="table_cell_eta">ETA: ' + torrent.getEta() + '</td>' +
-				'<td class="table_cell_ratio">Ratio: ' + torrent.getRatio() + '</td>' +
-				'<td class="table_cell_peers">Peers: ' + torrent.num_peers + '/' + torrent.total_peers + '</td>' +
-				'<td class="table_cell_seeds">Seeds: ' + torrent.num_seeds + '/' + torrent.total_seeds + '</td>' +
-				'<td class="table_cell_label"><select class="label_select" data-torrent-id="' + torrent.id + '">' + cachedLabelOptionsHtml + '</select></td>' +
-				'<td class="table_cell_speed">' + torrent.getSpeeds() + '</td>' +
+			'<td class="table_cell_size">' + sizeText + '</td>' +
+			'<td class="table_cell_eta">ETA: ' + torrent.getEta() + '</td>' +
+			'<td class="table_cell_ratio">Ratio: ' + torrent.getRatio() + '</td>' +
+			'<td class="table_cell_peers">Peers: ' + torrent.num_peers + '/' + torrent.total_peers + '</td>' +
+			'<td class="table_cell_seeds">Seeds: ' + torrent.num_seeds + '/' + torrent.total_seeds + '</td>' +
+			'<td class="table_cell_label"><select class="label_select" data-torrent-id="' + torrent.id + '">' + cachedLabelOptionsHtml + '</select></td>' +
+			'<td class="table_cell_speed">' + torrent.getSpeeds() + '</td>' +
 			'</tr></table>' +
 			'<table><tr><td class="table_cell_progress">' +
-				'<div class="progress_bar">' +
-					'<div class="inner ' + torrent.state + finishedClass + '" style="width:' + torrent.getPercent() + '"></div>' +
-					'<span>' + torrent.getPercent() + ' - ' + torrent.state + '</span>' +
-				'</div>' +
+			'<div class="progress_bar">' +
+			'<div class="inner ' + torrent.state + finishedClass + '" style="width:' + torrent.getPercent() + '"></div>' +
+			'<span>' + torrent.getPercent() + ' - ' + torrent.state + '</span>' +
+			'</div>' +
 			'</td></tr></table>' +
 			'<table><tr><td class="table_cell_actions">' +
-				'<div class="main_actions">' +
-					'<a class="state ' + state + '" title="Pause/Resume Torrent"></a>' +
-					'<a class="move_up" title="Move Torrent Up"></a>' +
-					'<a class="move_down" title="Move Torrent Down"></a>' +
-					'<a class="toggle_managed ' + managed + '" title="Toggle Auto-managed State"></a>' +
-					'<a class="force_recheck" title="Force re-check data"></a>' +
-					'<a class="delete" title="Delete Options"></a>' +
-				'</div>' +
+			'<div class="main_actions">' +
+			'<a class="state ' + state + '" title="Pause/Resume Torrent"></a>' +
+			'<a class="move_up" title="Move Torrent Up"></a>' +
+			'<a class="move_down" title="Move Torrent Down"></a>' +
+			'<a class="toggle_managed ' + managed + '" title="Toggle Auto-managed State"></a>' +
+			'<a class="force_recheck" title="Force re-check data"></a>' +
+			'<a class="delete" title="Delete Options"></a>' +
+			'</div>' +
 			'</td></tr></table>' +
-		'</div>';
+			'</div>';
 	}
 
 	function updateTableDelay(ms) {
@@ -143,7 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		}
 
 		// Pagination
-		TORRENTS_PER_PAGE = ExtensionConfig.torrents_per_page || 20;
+		TORRENTS_PER_PAGE = ExtensionConfig.torrents_per_page || 0;
 		if (TORRENTS_PER_PAGE === 0) {
 			// 0 means show all
 			totalPages = 1;
@@ -278,7 +282,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		DelugeMethod(method, rowData.torrent, rmdata);
 	});
 
-// Delete button — show options
+	// Delete button — show options
 	DomHelper.on(torrentContainer, "click", ".main_actions .delete", function () {
 		// 1. Get the torrent data for this specific row
 		var rowData = getRowData(this);
@@ -309,13 +313,13 @@ document.addEventListener("DOMContentLoaded", function () {
 		});
 	});
 
-// Delete option clicks
+	// Delete option clicks
 	DomHelper.on(torrentContainer, "click", ".delete-options a", function (e) {
 		e.preventDefault();
 
 		var td = this.closest("td");
 		var deleteOpts = td.querySelector(".delete-options");
-		
+
 		// Prevent double-clicks that cause the Deluge server to crash
 		if (!deleteOpts || deleteOpts.dataset.clicked) return;
 		deleteOpts.dataset.clicked = "true";

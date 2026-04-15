@@ -7,7 +7,7 @@
 
 ### New Features
 
-- **Paginated torrent list** — The popup now shows a configurable number of torrents per page instead of rendering the entire list at once. Dramatically improves performance for large libraries (1000+ torrents). Navigate with Prev/Next buttons; page info shows current position and total count.
+- **Paginated torrent list** — The popup now shows a configurable number of torrents per page instead of rendering the entire list at once. Dramatically improves performance for large libraries (1000+ torrents). Navigate with Previous/Next buttons; page info shows current position and total count.
 
 - **Torrents per page setting** — New dropdown in Options → Extras lets you choose 10, 20, 50, 100, or All (no paging). Default is 20. Setting is saved and applied on next popup open.
 
@@ -22,7 +22,7 @@
 
 | File | Change |
 |---|---|
-| `popup.html` | Added `#pagination` div with Prev/Next buttons and page info |
+| `popup.html` | Added `#pagination` div with Previous/Next buttons and page info |
 | `js/popup.js` | Pagination state, filtered array slicing, page controls, reset on filter/sort |
 | `js/global_options.js` | Added `torrents_per_page: 20` default |
 | `js/background.js` | Added `torrents_per_page: 20` default |
@@ -101,7 +101,7 @@
 | `js/options.js` | `saveOptions()` accepts callback; `?newver=true` only auto-saves on upgrade |
 | `js/global_options.js` | Added `.catch()` to `chrome.runtime.sendMessage()` |
 | `js/background.js` | `start()` accepts `allowOpenOptions`; `onInstalled` calls `start(true)`, bare call uses `start(false)` |
-| `options.html` | Added `value` attrs to inputs; fixed refresh interval `selected`; `type="button"` on buttons |
+| `options.html` | Added `value` attributes to inputs; fixed refresh interval `selected`; `type="button"` on buttons |
 | `manifest.json` | Version bumped to `2.3.0` |
 | `RELEASE_NOTES.md` | This entry |
 | `README.md` | Version history updated |
