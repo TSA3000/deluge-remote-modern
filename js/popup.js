@@ -121,9 +121,8 @@ document.addEventListener("DOMContentLoaded", function () {
 			torrents.reverse();
 		}
 
-		var htmlParts = [];
-		var labelValues = [];
-
+		// Filter torrents first
+		var filtered = [];
 		for (var i = 0, len = torrents.length; i < len; i++) {
 			var torrent = torrents[i];
 
@@ -140,9 +139,30 @@ document.addEventListener("DOMContentLoaded", function () {
 			if (fLabel !== "All" && fLabel !== torrent.label) {
 				continue;
 			}
+			filtered.push(torrent);
+		}
 
-			htmlParts.push(buildRowHtml(torrent));
-			labelValues.push({ id: torrent.id, label: torrent.label || "" });
+		// Pagination
+		TORRENTS_PER_PAGE = ExtensionConfig.torrents_per_page || 20;
+		if (TORRENTS_PER_PAGE === 0) {
+			// 0 means show all
+			totalPages = 1;
+			currentPage = 0;
+		} else {
+			totalPages = Math.max(1, Math.ceil(filtered.length / TORRENTS_PER_PAGE));
+			if (currentPage >= totalPages) currentPage = totalPages - 1;
+			if (currentPage < 0) currentPage = 0;
+		}
+
+		var startIdx = (TORRENTS_PER_PAGE === 0) ? 0 : currentPage * TORRENTS_PER_PAGE;
+		var endIdx = (TORRENTS_PER_PAGE === 0) ? filtered.length : startIdx + TORRENTS_PER_PAGE;
+		var pageItems = filtered.slice(startIdx, endIdx);
+
+		var htmlParts = [];
+		var labelValues = [];
+		for (var p = 0; p < pageItems.length; p++) {
+			htmlParts.push(buildRowHtml(pageItems[p]));
+			labelValues.push({ id: pageItems[p].id, label: pageItems[p].label || "" });
 		}
 
 		torrentContainer.innerHTML = htmlParts.join("");
@@ -151,6 +171,26 @@ document.addEventListener("DOMContentLoaded", function () {
 			var sel = torrentContainer.querySelector('.label_select[data-torrent-id="' + labelValues[j].id + '"]');
 			if (sel) sel.value = labelValues[j].label;
 		}
+
+		// Update pagination controls
+		updatePaginationControls(filtered.length);
+	}
+
+	function updatePaginationControls(totalFiltered) {
+		var pageInfo = document.getElementById("page_info");
+		var prevBtn = document.getElementById("page_prev");
+		var nextBtn = document.getElementById("page_next");
+		var paginationDiv = document.getElementById("pagination");
+
+		if (TORRENTS_PER_PAGE === 0 || totalFiltered <= TORRENTS_PER_PAGE) {
+			paginationDiv.style.display = "none";
+			return;
+		}
+
+		paginationDiv.style.display = "";
+		pageInfo.textContent = "Page " + (currentPage + 1) + " / " + totalPages + " (" + totalFiltered + " torrents)";
+		prevBtn.disabled = (currentPage <= 0);
+		nextBtn.disabled = (currentPage >= totalPages - 1);
 	}
 
 	// ── Event Handlers (delegated) ──────────────────────────────────────
@@ -377,11 +417,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
 		sortEl.addEventListener("change", function () {
 			localStorage.sortColumn = this.value;
+			currentPage = 0;
 			renderTable();
 		});
 
 		sortInvert.addEventListener("change", function () {
 			localStorage.sortMethod = this.checked ? "desc" : "asc";
+			currentPage = 0;
 			renderTable();
 		});
 
@@ -389,8 +431,29 @@ document.addEventListener("DOMContentLoaded", function () {
 			if (el) {
 				el.addEventListener("change", function () {
 					localStorage[this.id] = this.value;
+					currentPage = 0;
 					renderTable();
 				});
+			}
+		});
+	}());
+
+	// ── Pagination Controls ────────────────────────────────────────────
+	(function () {
+		var prevBtn = document.getElementById("page_prev");
+		var nextBtn = document.getElementById("page_next");
+
+		prevBtn.addEventListener("click", function () {
+			if (currentPage > 0) {
+				currentPage--;
+				renderTable();
+			}
+		});
+
+		nextBtn.addEventListener("click", function () {
+			if (currentPage < totalPages - 1) {
+				currentPage++;
+				renderTable();
 			}
 		});
 	}());

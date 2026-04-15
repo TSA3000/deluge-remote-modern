@@ -18,6 +18,7 @@ A lightweight, open-source Chrome extension to manage your [Deluge](https://delu
 - **Multi-Theme Support** — System auto, Light, Dark (Midnight), Solarized Dark, Nord, and Dracula
 - **Icon Packs** — Choose between Classic (original PNGs) or Modern (SVG glyphs that adapt to your theme)
 - **Label Selector** — Change torrent labels directly from the popup (requires Deluge Label plugin)
+- **Pagination** — Configurable torrents per page (10, 20, 50, 100, or all) for large libraries
 - **Variable Refresh Rate** — Configure how often the popup polls your server (500ms – 30s)
 - **Minimal Permissions** — Only `contextMenus`, `storage`, and host access. No `tabs`, no tracking.
 
@@ -139,6 +140,12 @@ SVG glyphs rendered via CSS `mask-image`. Each icon uses semantic colors that ad
 ---
 
 ## Version History
+
+### 2026-04-15 v2.5.0 — Pagination
+
+- Paginated torrent list with configurable items per page (10, 20, 50, 100, All)
+- Page resets on sort/filter change; pagination bar auto-hides when not needed
+- New "Torrents per page" option in Extras
 
 ### 2026-04-11 v2.4.0 — Test Connection Button
 

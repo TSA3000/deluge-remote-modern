@@ -227,3 +227,36 @@ body {
 	margin: 0 1px;
 	width: 16px;
 }
+
+/* ── Pagination ────────────────────────────────────────────────────── */
+#pagination {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 12px;
+	padding: 6px 0;
+	border-top: 1px solid #ddd;
+	font-size: 11px;
+}
+
+#pagination button {
+	background: #f0f0f0;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	padding: 3px 10px;
+	cursor: pointer;
+	font-size: 11px;
+}
+
+#pagination button:hover:not(:disabled) {
+	background: #e0e0e0;
+}
+
+#pagination button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+#page_info {
+	color: #666;
+}

@@ -2,6 +2,41 @@
 
 ---
 
+## v2.5.0 — Pagination
+*2026-04-15*
+
+### New Features
+
+- **Paginated torrent list** — The popup now shows a configurable number of torrents per page instead of rendering the entire list at once. Dramatically improves performance for large libraries (1000+ torrents). Navigate with Prev/Next buttons; page info shows current position and total count.
+
+- **Torrents per page setting** — New dropdown in Options → Extras lets you choose 10, 20, 50, 100, or All (no paging). Default is 20. Setting is saved and applied on next popup open.
+
+### Technical Details
+
+- Filtered torrents are collected into an array first, then sliced by `currentPage * TORRENTS_PER_PAGE`
+- Page resets to 1 when sort column, sort direction, or any filter changes
+- Pagination bar auto-hides when all torrents fit on one page or "All" is selected
+- Dark theme support for pagination controls via CSS custom properties
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `popup.html` | Added `#pagination` div with Prev/Next buttons and page info |
+| `js/popup.js` | Pagination state, filtered array slicing, page controls, reset on filter/sort |
+| `js/global_options.js` | Added `torrents_per_page: 20` default |
+| `js/background.js` | Added `torrents_per_page: 20` default |
+| `options.html` | Added "Torrents per page" dropdown in Extras (10, 20, 50, 100, All) |
+| `js/options.js` | Save/load `torrents_per_page`, change listener with status message |
+| `css/popup.css` | Pagination bar styling |
+| `css/theme-base.css` | Dark theme pagination styles |
+| `manifest.json` | Version bumped to `2.5.0` |
+| `RELEASE_NOTES.md` | This entry |
+| `README.md` | Version history and features updated |
+
+---
+
+
 ## v2.4.0 — Test Connection Button
 *2026-04-11*
 

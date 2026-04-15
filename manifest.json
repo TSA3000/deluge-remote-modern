@@ -1,7 +1,7 @@
 {
 	"name": "Deluge Remote Modern",
 	"description": "Control your Deluge BitTorrent client directly from Chrome. Secure, fast, Manifest V3 compliant, and fully open-source.",
-	"version": "2.4.0",
+	"version": "2.5.0",
 	"icons": {
 		"128": "images/icons/128.png",
 		"64": "images/icons/64.png",

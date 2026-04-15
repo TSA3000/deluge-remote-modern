@@ -483,3 +483,22 @@ html:not([data-theme="light"])[data-theme] body {
 	max-width: 80px;
 	cursor: pointer;
 }
+
+/* Pagination — themed */
+[data-theme]:not([data-theme="light"]) #pagination {
+	border-top-color: var(--theme-border-color);
+}
+
+[data-theme]:not([data-theme="light"]) #pagination button {
+	background: var(--theme-input-bg);
+	border-color: var(--theme-border-color);
+	color: var(--theme-text-color);
+}
+
+[data-theme]:not([data-theme="light"]) #pagination button:hover:not(:disabled) {
+	background: var(--theme-hover-bg);
+}
+
+[data-theme]:not([data-theme="light"]) #page_info {
+	color: var(--theme-text-secondary);
+}

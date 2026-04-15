@@ -20,6 +20,7 @@ function saveOptions(callback) {
 			"debug_mode": document.getElementById("debug_mode").checked,
 			"dark_mode": document.getElementById("dark_mode").value,
 			"icon_pack": document.getElementById("icon_pack").value,
+			"torrents_per_page": parseInt(document.getElementById("torrents_per_page").value),
 			"version": chrome.runtime.getManifest().version
 		};
 
