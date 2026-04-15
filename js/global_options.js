@@ -12,7 +12,7 @@ var ExtensionConfig = {
 	debug_mode: false,
 	dark_mode: "system",
 	icon_pack: "classic",
-	torrents_per_page: 20
+	torrents_per_page: 0
 };
 
 chrome.storage.onChanged.addListener(function (changes, namespace) {

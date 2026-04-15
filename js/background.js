@@ -19,7 +19,7 @@ let ExtensionConfig = {
 	refresh_interval: 3000,
 	debug_mode:       false,
 	dark_mode:        "system",
-	torrents_per_page: 20
+	torrents_per_page: 0
 };
 
 function loadConfig() {
