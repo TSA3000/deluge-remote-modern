@@ -64,3 +64,89 @@ div#logo span {
   font-weight: bold;
   font-size: 0.9em;
 }
+
+/* ── Setup Page Polish ─────────────────────────────────────────────── */
+
+/* Field help text */
+.field-hint {
+	display: block;
+	margin-top: 4px;
+	font-size: 10px;
+	color: #888;
+	line-height: 1.4;
+}
+.field-hint code {
+	background: rgba(0,0,0,0.06);
+	padding: 1px 4px;
+	border-radius: 2px;
+	font-size: 10px;
+}
+
+/* Live URL preview */
+#url_preview {
+	margin: 4px 0 8px;
+	padding: 4px 8px;
+	background: rgba(0,0,0,0.04);
+	border-radius: 3px;
+	font-size: 11px;
+	display: inline-block;
+}
+#url_preview .url-label {
+	color: #888;
+	margin-right: 6px;
+}
+#url_preview code {
+	font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+	color: #0069d9;
+}
+
+/* Password toggle button */
+.icon-btn {
+	background: none;
+	border: 1px solid transparent;
+	border-radius: 3px;
+	padding: 2px 6px;
+	cursor: pointer;
+	font-size: 14px;
+	vertical-align: middle;
+	margin-left: 4px;
+}
+.icon-btn:hover {
+	background: rgba(0,0,0,0.05);
+	border-color: #ccc;
+}
+
+/* HTTP warning */
+.inline-warning {
+	margin-top: 4px;
+	padding: 6px 10px;
+	background: #fff8e1;
+	border-left: 3px solid #f9a825;
+	border-radius: 2px;
+	font-size: 11px;
+	color: #6b5b00;
+	line-height: 1.5;
+}
+.inline-warning code {
+	background: rgba(0,0,0,0.08);
+	padding: 1px 4px;
+	border-radius: 2px;
+	font-size: 10px;
+}
+
+/* Test Connection result — enhanced */
+#test_result {
+	margin-left: 10px;
+	font-size: 12px;
+	font-weight: 500;
+	vertical-align: middle;
+}
+#test_result.testing {
+	color: #888;
+}
+#test_result.success {
+	color: #27ae60;
+}
+#test_result.error {
+	color: #e74c3c;
+}

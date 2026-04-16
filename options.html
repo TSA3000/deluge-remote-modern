@@ -121,8 +121,21 @@
                 :
                 <input id="address_port" placeholder="8112" size="5" />
                 /
-                <input id="address_base" placeholder="deluge" size="5" />
-                /
+                <input id="address_base" placeholder="" size="10" />
+                <span class="field-hint">
+                  <br />Base path only for reverse proxies (e.g.
+                  <code>https://yourdomain.com/<strong>deluge</strong>/</code>).
+                  Leave empty for direct connection.
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td></td>
+              <td>
+                <div id="url_preview">
+                  <span class="url-label">Endpoint:</span>
+                  <code id="url_preview_value">https://:8112/json</code>
+                </div>
               </td>
             </tr>
             <tr>
@@ -131,6 +144,7 @@
               </td>
               <td>
                 <input id="password" size="20" type="password" />
+                <button type="button" id="password_toggle" class="icon-btn" title="Show/hide password" aria-label="Show password">👁</button>
               </td>
             </tr>
             <tr>
@@ -140,6 +154,17 @@
                   Test Connection
                 </button>
                 <span id="test_result"></span>
+              </td>
+            </tr>
+            <tr id="http_warning_row" style="display: none;">
+              <td></td>
+              <td>
+                <div class="inline-warning">
+                  <strong>⚠ HTTP warning:</strong> Firefox's HTTPS-Only Mode
+                  blocks plain HTTP by default. Add an exception in
+                  <code>about:preferences#privacy</code> → HTTPS-Only Mode
+                  → Manage Exceptions.
+                </div>
               </td>
             </tr>
           </table>

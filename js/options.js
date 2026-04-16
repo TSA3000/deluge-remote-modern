@@ -77,32 +77,74 @@ document.addEventListener("DOMContentLoaded", function () {
 		var result = document.getElementById("test_result");
 		btn.disabled = true;
 		result.textContent = "Testing...";
-		result.style.color = "#888";
+		result.className = "test-result testing";
 
 		saveOptions(function () {
 			chrome.runtime.sendMessage({ method: "check_status" }, function (response) {
 				btn.disabled = false;
 				if (chrome.runtime.lastError) {
 					result.textContent = "✗ Service worker not responding";
-					result.style.color = "#e74c3c";
+					result.className = "test-result error";
 					return;
 				}
 				if (response && response.connected) {
-					result.textContent = "✓ Connected!";
-					result.style.color = "#27ae60";
+					result.textContent = "✓ Connected successfully!";
+					result.className = "test-result success";
 				} else if (response && response.reason === "auth_failed") {
-					result.textContent = "✗ Login failed — check password";
-					result.style.color = "#e74c3c";
+					result.textContent = "✗ Login failed — check your password";
+					result.className = "test-result error";
 				} else if (response && response.reason === "network_error") {
-					result.textContent = "✗ Cannot reach server — check address";
-					result.style.color = "#e74c3c";
+					result.textContent = "✗ Cannot reach server — check the address";
+					result.className = "test-result error";
 				} else {
 					result.textContent = "✗ Connection failed";
-					result.style.color = "#e74c3c";
+					result.className = "test-result error";
 				}
 			});
 		});
 	});
+
+	// ── URL Preview — live endpoint display ────────────────────────────
+	function updateUrlPreview() {
+		var proto = document.getElementById("address_protocol").value || "https";
+		var ip    = document.getElementById("address_ip").value || "<ip-or-host>";
+		var port  = document.getElementById("address_port").value || "8112";
+		var base  = document.getElementById("address_base").value.trim();
+		var url = proto + "://" + ip + ":" + port + "/" + (base ? base + "/" : "") + "json";
+		document.getElementById("url_preview_value").textContent = url;
+
+		// Show HTTP warning only when protocol is http
+		var httpWarn = document.getElementById("http_warning_row");
+		if (httpWarn) {
+			httpWarn.style.display = (proto === "http") ? "" : "none";
+		}
+	}
+	["address_protocol", "address_ip", "address_port", "address_base"].forEach(function (id) {
+		var el = document.getElementById(id);
+		if (!el) return;
+		el.addEventListener("input", updateUrlPreview);
+		el.addEventListener("change", updateUrlPreview);
+	});
+	updateUrlPreview();
+
+	// ── Password show/hide toggle ──────────────────────────────────────
+	var pwToggle = document.getElementById("password_toggle");
+	if (pwToggle) {
+		pwToggle.addEventListener("click", function () {
+			var pw = document.getElementById("password");
+			if (pw.type === "password") {
+				pw.type = "text";
+				this.textContent = "🙈";
+				this.setAttribute("aria-label", "Hide password");
+				this.title = "Hide password";
+			} else {
+				pw.type = "password";
+				this.textContent = "👁";
+				this.setAttribute("aria-label", "Show password");
+				this.title = "Show password";
+			}
+		});
+	}
 });
 
 chrome.storage.onChanged.addListener(function (changes, namespace) {
@@ -198,5 +240,13 @@ chrome.storage.sync.get(function (items) {
 	if (window.location.search === "?newver=true" && Object.keys(items).length > 0) {
 		debug_log("Version upgrade. Re-saving settings.");
 		saveOptions();
+	}
+
+	// Refresh URL preview after settings loaded
+	var updateBtn = document.getElementById("url_preview_value");
+	if (updateBtn) {
+		// Trigger the input event chain so preview + HTTP warning update
+		var evt = new Event("input");
+		document.getElementById("address_protocol").dispatchEvent(new Event("change"));
 	}
 });
