@@ -53,10 +53,18 @@ Removed 5 unused fields from the torrent status request (`seeds_peers_ratio`, `i
 - Dispatches `Torrents:pluginsChanged` CustomEvent so the popup can reactively hide/show plugin-dependent UI
 - Event listener registration is idempotent — registered once per session
 
-### Files Changed
+### Bug Fixes
 
-| File | Change |
-|---|---|
+- **Pagination bar appeared light in dark themes** — The pagination bar and its Prev/Next buttons rendered with a light gradient background in all dark themes, including System (OS-level dark mode). The existing dark theme rules in `theme-base.css` didn't override the `background-image: linear-gradient(...)` on the pagination container, and they didn't target System theme at all (which uses `@media prefers-color-scheme` rather than a `data-theme` attribute).
+
+### Fix
+
+- Added explicit overrides for `[data-theme="dark"]`, `[data-theme="solarized"]`, `[data-theme="nord"]`, and `[data-theme="dracula"]` that set `background-image: none` plus the proper dark background color
+- Added `@media (prefers-color-scheme: dark)` block covering `html:not([data-theme])` and `html[data-theme="system"]` so OS-level dark mode applies the same dark styling
+
+---
+
+|---|
 | `js/torrents.js` | Rewritten — diff polling, events, trimmed KEYS, plugin detection, `hasPlugin()` API |
 | `js/popup.js` | Search filter, event polling, search input handler, conditional label rendering, plugin visibility listener |
 | `js/deluge.js` | Silent default catch, AbortError normalization |
