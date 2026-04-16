@@ -2,6 +2,27 @@
 
 ---
 
+## v2.6.1 — Pagination Dark Mode Fix
+*2026-04-16*
+
+### Bug Fixes
+
+- **Pagination bar appeared light in dark themes** — The pagination bar and its Prev/Next buttons rendered with a light gradient background in all dark themes, including System (OS-level dark mode). The existing dark theme rules in `theme-base.css` didn't override the `background-image: linear-gradient(...)` on the pagination container, and they didn't target System theme at all (which uses `@media prefers-color-scheme` rather than a `data-theme` attribute).
+
+### Fix
+
+- Added explicit overrides for `[data-theme="dark"]`, `[data-theme="solarized"]`, `[data-theme="nord"]`, and `[data-theme="dracula"]` that set `background-image: none` plus the proper dark background color
+- Added `@media (prefers-color-scheme: dark)` block covering `html:not([data-theme])` and `html[data-theme="system"]` so OS-level dark mode applies the same dark styling
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `css/theme-base.css` | Added pagination dark-mode rules for all themes + System |
+| `manifest.json` | Version bumped to `2.6.1` |
+
+---
+
 ## v2.6.0 — Performance, Search, Setup Polish & Plugin Detection
 *2026-04-16*
 
@@ -53,18 +74,10 @@ Removed 5 unused fields from the torrent status request (`seeds_peers_ratio`, `i
 - Dispatches `Torrents:pluginsChanged` CustomEvent so the popup can reactively hide/show plugin-dependent UI
 - Event listener registration is idempotent — registered once per session
 
-### Bug Fixes
+### Files Changed
 
-- **Pagination bar appeared light in dark themes** — The pagination bar and its Prev/Next buttons rendered with a light gradient background in all dark themes, including System (OS-level dark mode). The existing dark theme rules in `theme-base.css` didn't override the `background-image: linear-gradient(...)` on the pagination container, and they didn't target System theme at all (which uses `@media prefers-color-scheme` rather than a `data-theme` attribute).
-
-### Fix
-
-- Added explicit overrides for `[data-theme="dark"]`, `[data-theme="solarized"]`, `[data-theme="nord"]`, and `[data-theme="dracula"]` that set `background-image: none` plus the proper dark background color
-- Added `@media (prefers-color-scheme: dark)` block covering `html:not([data-theme])` and `html[data-theme="system"]` so OS-level dark mode applies the same dark styling
-
----
-
-|---|
+| File | Change |
+|---|---|
 | `js/torrents.js` | Rewritten — diff polling, events, trimmed KEYS, plugin detection, `hasPlugin()` API |
 | `js/popup.js` | Search filter, event polling, search input handler, conditional label rendering, plugin visibility listener |
 | `js/deluge.js` | Silent default catch, AbortError normalization |
@@ -75,8 +88,6 @@ Removed 5 unused fields from the torrent status request (`seeds_peers_ratio`, `i
 | `css/options.css` | Field hints, URL preview, icon button, inline warning, test result styles |
 | `css/theme-base.css` | Dark theme counterparts for all new elements |
 | `manifest.json` | Version bumped to `2.6.0` |
-| `RELEASE_NOTES.md` | This entry |
-| `README.md` | Updated |
 
 ### Backwards Compatibility
 

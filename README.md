@@ -27,10 +27,12 @@ A Chrome extension for managing a remote Deluge torrent server from your browser
 
 ## Version History
 
+### 2026-04-16 v2.6.1 — Pagination Dark Mode Fix
+- Fixed pagination bar appearing light in dark themes (including System/OS dark mode)
+
 ### 2026-04-16 v2.6.0 — Performance, Search, Setup Polish & Plugin Detection
 - Search by name, diff polling, events, trimmed fields
 - Live URL preview, password toggle, HTTP warning, better Test Connection feedback
-- Fixed pagination bar appearing light in dark themes (including System/OS dark mode)
 - Label plugin detection — hides UI when plugin disabled
 - AbortError bugfix, timeouts raised to 5s
 
