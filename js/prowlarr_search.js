@@ -1,0 +1,785 @@
+/*
+ * Prowlarr Search — popup tab controller.
+ *
+ * Handles the "Search Indexers" and "History" tabs in the popup.
+ * - Loads indexers into a checkbox multi-select (eagerly, with retry on
+ *   tab activation if the first attempt failed).
+ * - Sends search queries and renders results in a sortable table.
+ * - Grabs releases by POSTing to Prowlarr's /api/v1/search — Prowlarr
+ *   then forwards to whatever download client it has configured.
+ * - Persists the last 50 searches in chrome.storage.local and surfaces
+ *   them on a dedicated History tab.
+ */
+var ProwlarrSearch = (function () {
+	var pub = {};
+
+	var initialized          = false;
+	var indexersLoaded       = false;  // true once indexers fetched successfully
+	var loadIndexersInFlight = false;
+	var indexerList          = [];     // [{id, name, protocol, enable}]
+	var indexerMap           = {};     // id -> name
+	var selectedIndexers     = [];     // array of indexer ids; [] = all
+	var currentResults       = [];
+	var sortColumn           = "seeders";
+	var sortDesc             = true;
+
+	var HISTORY_KEY   = "prowlarr_history";
+	var HISTORY_MAX   = 50;
+
+	// ── Categories (Newznab/Torznab top-level) ─────────────────────────
+	var CATEGORY_OPTIONS = [
+		{ value: "",     label: "All categories" },
+		{ value: "2000", label: "Movies" },
+		{ value: "5000", label: "TV" },
+		{ value: "3000", label: "Audio" },
+		{ value: "7000", label: "Books" },
+		{ value: "1000", label: "Console" },
+		{ value: "4000", label: "PC" },
+		{ value: "6000", label: "XXX" },
+		{ value: "8000", label: "Other" }
+	];
+
+	// ── Helpers ─────────────────────────────────────────────────────────
+	function escapeHtml(s) {
+		if (s === null || typeof s === "undefined") return "";
+		return String(s)
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;")
+			.replace(/'/g, "&#39;");
+	}
+
+	function formatSize(bytes) {
+		if (!bytes || bytes < 0) return "—";
+		var units = ["B", "KB", "MB", "GB", "TB"];
+		var i = 0;
+		var n = bytes;
+		while (n >= 1024 && i < units.length - 1) {
+			n /= 1024;
+			i++;
+		}
+		return n.toFixed(n < 10 && i > 0 ? 2 : 1) + " " + units[i];
+	}
+
+	function formatAge(publishDate) {
+		if (!publishDate) return "—";
+		var then = new Date(publishDate).getTime();
+		if (isNaN(then)) return "—";
+		var diffSec = Math.max(0, (Date.now() - then) / 1000);
+		if (diffSec < 60)        return Math.floor(diffSec) + "s";
+		if (diffSec < 3600)      return Math.floor(diffSec / 60) + "m";
+		if (diffSec < 86400)     return Math.floor(diffSec / 3600) + "h";
+		if (diffSec < 86400*30)  return Math.floor(diffSec / 86400) + "d";
+		if (diffSec < 86400*365) return Math.floor(diffSec / (86400 * 30)) + "mo";
+		return Math.floor(diffSec / (86400 * 365)) + "y";
+	}
+
+	function indexerName(result) {
+		if (result.indexer) return result.indexer;
+		if (result.indexerId && indexerMap[result.indexerId]) return indexerMap[result.indexerId];
+		return "?";
+	}
+
+	function setStatus(text, cls) {
+		var el = document.getElementById("prowlarr_status");
+		if (!el) return;
+		el.textContent = text || "";
+		el.className = "prowlarr-status" + (cls ? " " + cls : "");
+	}
+
+	// ── Indexer multi-select ────────────────────────────────────────────
+	function loadIndexers() {
+		if (loadIndexersInFlight) return;
+		loadIndexersInFlight = true;
+
+		var itemsEl = document.getElementById("prowlarr_indexer_items");
+		if (itemsEl && !indexersLoaded) {
+			itemsEl.innerHTML = '<div class="ms-loading">Loading indexers…</div>';
+		}
+
+		Prowlarr.getIndexers()
+			.success(function (list) {
+				loadIndexersInFlight = false;
+				if (!Array.isArray(list)) {
+					if (itemsEl) itemsEl.innerHTML = '<div class="ms-error">Unexpected response.</div>';
+					return;
+				}
+				indexerList = list
+					.filter(function (x) { return x.enable !== false; })
+					.sort(function (a, b) { return (a.name || "").localeCompare(b.name || ""); });
+				indexerMap = {};
+				for (var i = 0; i < indexerList.length; i++) {
+					indexerMap[indexerList[i].id] = indexerList[i].name;
+				}
+				indexersLoaded = true;
+				renderIndexerList();
+			})
+			.error(function (_, __, err) {
+				loadIndexersInFlight = false;
+				debug_log("Prowlarr: failed to load indexers", err);
+				if (itemsEl) {
+					itemsEl.innerHTML = '<div class="ms-error">Could not load indexers.' +
+						' <a href="#" id="prowlarr_indexer_retry">Retry</a></div>';
+					var retry = document.getElementById("prowlarr_indexer_retry");
+					if (retry) retry.addEventListener("click", function (e) {
+						e.preventDefault();
+						loadIndexers();
+					});
+				}
+			});
+	}
+
+	function renderIndexerList() {
+		var itemsEl = document.getElementById("prowlarr_indexer_items");
+		if (!itemsEl) return;
+
+		if (!indexerList.length) {
+			itemsEl.innerHTML = '<div class="ms-error">No indexers configured in Prowlarr.</div>';
+			return;
+		}
+
+		var parts = [];
+		for (var i = 0; i < indexerList.length; i++) {
+			var ix = indexerList[i];
+			var checked = selectedIndexers.indexOf(ix.id) !== -1 ? " checked" : "";
+			var protoText = ix.protocol === "usenet" ? "nzb" : (ix.protocol || "");
+			parts.push(
+				'<label class="ms-item" data-id="' + ix.id + '">' +
+				'<input type="checkbox" class="ms-check" value="' + ix.id + '"' + checked + ' />' +
+				'<span class="ms-name">' + escapeHtml(ix.name) + '</span>' +
+				(protoText
+					? '<span class="ms-proto ms-proto-' + escapeHtml(ix.protocol) + '">' + escapeHtml(protoText) + '</span>'
+					: '') +
+				'</label>'
+			);
+		}
+		itemsEl.innerHTML = parts.join("");
+		updateIndexerAllState();
+		updateIndexerLabel();
+	}
+
+	function updateIndexerAllState() {
+		var all = document.getElementById("prowlarr_indexer_all");
+		if (!all) return;
+		all.checked = (selectedIndexers.length === 0);
+	}
+
+	function updateIndexerLabel() {
+		var label = document.getElementById("prowlarr_indexer_label");
+		if (!label) return;
+		if (selectedIndexers.length === 0) {
+			label.textContent = "All indexers";
+		} else if (selectedIndexers.length === 1) {
+			label.textContent = indexerMap[selectedIndexers[0]] || "1 indexer";
+		} else {
+			label.textContent = selectedIndexers.length + " indexers";
+		}
+	}
+
+	function openIndexerMenu() {
+		var menu = document.getElementById("prowlarr_indexer_menu");
+		var dd   = document.getElementById("prowlarr_indexer_ms");
+		if (!menu || !dd) return;
+		dd.classList.add("ms-open");
+		// Close on outside click
+		setTimeout(function () {
+			document.addEventListener("mousedown", handleOutsideClick);
+		}, 0);
+	}
+
+	function closeIndexerMenu() {
+		var dd = document.getElementById("prowlarr_indexer_ms");
+		if (!dd) return;
+		dd.classList.remove("ms-open");
+		document.removeEventListener("mousedown", handleOutsideClick);
+	}
+
+	function handleOutsideClick(e) {
+		var dd = document.getElementById("prowlarr_indexer_ms");
+		if (!dd) return;
+		if (!dd.contains(e.target)) closeIndexerMenu();
+	}
+
+	function wireIndexerDropdown() {
+		var toggle = document.getElementById("prowlarr_indexer_toggle");
+		var allBox = document.getElementById("prowlarr_indexer_all");
+		var items  = document.getElementById("prowlarr_indexer_items");
+		var dd     = document.getElementById("prowlarr_indexer_ms");
+		if (!toggle || !allBox || !items || !dd) return;
+
+		toggle.addEventListener("click", function (e) {
+			e.preventDefault();
+			if (dd.classList.contains("ms-open")) closeIndexerMenu();
+			else {
+				openIndexerMenu();
+				// Refresh on every open if we haven't loaded yet
+				if (!indexersLoaded && !loadIndexersInFlight) loadIndexers();
+			}
+		});
+
+		allBox.addEventListener("change", function () {
+			if (this.checked) {
+				selectedIndexers = [];
+			} else {
+				// If user unchecked "All" while no individuals are selected,
+				// re-check it — we never want an empty selection that means
+				// "nothing".
+				if (selectedIndexers.length === 0) {
+					this.checked = true;
+					return;
+				}
+			}
+			// Reflect in the checkbox list
+			var boxes = items.querySelectorAll(".ms-check");
+			for (var i = 0; i < boxes.length; i++) {
+				boxes[i].checked = selectedIndexers.indexOf(parseInt(boxes[i].value, 10)) !== -1;
+			}
+			updateIndexerLabel();
+		});
+
+		DomHelper.on(items, "change", ".ms-check", function () {
+			var id = parseInt(this.value, 10);
+			var idx = selectedIndexers.indexOf(id);
+			if (this.checked && idx === -1) selectedIndexers.push(id);
+			else if (!this.checked && idx !== -1) selectedIndexers.splice(idx, 1);
+			updateIndexerAllState();
+			updateIndexerLabel();
+		});
+	}
+
+	// ── Category dropdown ───────────────────────────────────────────────
+	function loadCategories() {
+		var select = document.getElementById("prowlarr_category");
+		if (!select) return;
+		select.innerHTML = "";
+		for (var i = 0; i < CATEGORY_OPTIONS.length; i++) {
+			var opt = document.createElement("option");
+			opt.value = CATEGORY_OPTIONS[i].value;
+			opt.textContent = CATEGORY_OPTIONS[i].label;
+			select.appendChild(opt);
+		}
+	}
+
+	// ── Sorting ─────────────────────────────────────────────────────────
+	function sortResults(results) {
+		var sorted = results.slice();
+		sorted.sort(function (a, b) {
+			var av, bv;
+			switch (sortColumn) {
+				case "title":
+					av = (a.title || "").toLowerCase();
+					bv = (b.title || "").toLowerCase();
+					return av < bv ? -1 : av > bv ? 1 : 0;
+				case "indexer":
+					av = indexerName(a).toLowerCase();
+					bv = indexerName(b).toLowerCase();
+					return av < bv ? -1 : av > bv ? 1 : 0;
+				case "size":
+					return (a.size || 0) - (b.size || 0);
+				case "age":
+					av = new Date(a.publishDate || 0).getTime() || 0;
+					bv = new Date(b.publishDate || 0).getTime() || 0;
+					return bv - av;
+				case "leechers":
+					return (a.leechers || 0) - (b.leechers || 0);
+				case "seeders":
+				default:
+					return (a.seeders || 0) - (b.seeders || 0);
+			}
+		});
+		if (sortDesc) sorted.reverse();
+		return sorted;
+	}
+
+	// ── Row rendering ───────────────────────────────────────────────────
+	function buildRowHtml(result, index) {
+		var proto = result.protocol || "torrent";
+		var canGrab = !!(result.guid && result.indexerId);
+		var hasDownload = !!result.downloadUrl;
+		var hasMagnet   = !!result.magnetUrl;
+		var info = result.infoUrl || result.guid || "";
+
+		var seeds = (typeof result.seeders === "number") ? result.seeders : "—";
+		var leech = (typeof result.leechers === "number") ? result.leechers : "—";
+
+		return '<tr class="prowlarr_row" data-idx="' + index + '">' +
+			'<td class="p_col_title">' +
+				(info ? '<a href="' + escapeHtml(info) + '" target="_blank" rel="noopener">' + escapeHtml(result.title) + '</a>' : escapeHtml(result.title)) +
+				'<span class="p_proto p_proto_' + escapeHtml(proto) + '">' + escapeHtml(proto) + '</span>' +
+			'</td>' +
+			'<td class="p_col_indexer">' + escapeHtml(indexerName(result)) + '</td>' +
+			'<td class="p_col_size">' + formatSize(result.size) + '</td>' +
+			'<td class="p_col_age" title="' + escapeHtml(result.publishDate || "") + '">' + formatAge(result.publishDate) + '</td>' +
+			'<td class="p_col_sl"><span class="seeds">' + seeds + '</span> / <span class="leech">' + leech + '</span></td>' +
+			'<td class="p_col_actions">' +
+				(canGrab ? '<button type="button" class="p_send clean-gray" title="Grab — Prowlarr pushes to its download client">⬇ Grab</button>' : '') +
+				(hasDownload ? '<button type="button" class="p_copy" title="Copy download URL" data-url="' + escapeHtml(result.downloadUrl) + '">⧉</button>' : '') +
+				(hasMagnet   ? '<button type="button" class="p_copy" title="Copy magnet URL"   data-url="' + escapeHtml(result.magnetUrl)   + '">🧲</button>' : '') +
+			'</td>' +
+		'</tr>';
+	}
+
+	function renderResults() {
+		var tbody = document.getElementById("prowlarr_results_body");
+		if (!tbody) return;
+
+		if (!currentResults.length) {
+			tbody.innerHTML = '<tr><td colspan="6" class="p_empty">No results.</td></tr>';
+			updateCountLabel(0);
+			return;
+		}
+
+		var sorted = sortResults(currentResults);
+		var parts = [];
+		for (var i = 0; i < sorted.length; i++) {
+			parts.push(buildRowHtml(sorted[i], i));
+		}
+		currentResults = sorted;
+		tbody.innerHTML = parts.join("");
+		updateCountLabel(sorted.length);
+
+		var headers = document.querySelectorAll("#prowlarr_results thead th[data-sort]");
+		for (var h = 0; h < headers.length; h++) {
+			headers[h].classList.remove("sort-asc", "sort-desc");
+			if (headers[h].getAttribute("data-sort") === sortColumn) {
+				headers[h].classList.add(sortDesc ? "sort-desc" : "sort-asc");
+			}
+		}
+	}
+
+	function updateCountLabel(n) {
+		var el = document.getElementById("prowlarr_result_count");
+		if (el) el.textContent = n === 1 ? "1 result" : n + " results";
+	}
+
+	// ── Search execution ────────────────────────────────────────────────
+	// Sequence counter so responses from superseded or cancelled searches
+	// don't overwrite the UI of the current one.
+	var searchSequence = 0;
+
+	function setSearchingState(on) {
+		var btn = document.getElementById("prowlarr_search_btn");
+		if (!btn) return;
+		if (on) {
+			btn.classList.add("is-loading");
+			// Leave the button enabled so the user can click it to cancel
+		} else {
+			btn.classList.remove("is-loading");
+			btn.disabled = false;
+		}
+	}
+
+	function cancelSearch(silent) {
+		// Bump the sequence so any in-flight response is treated as stale.
+		searchSequence++;
+		setSearchingState(false);
+		if (!silent) setStatus("Search cancelled.", "warn");
+		Prowlarr.cancelSearch();  // fire-and-forget
+	}
+
+	function runSearch(overrides) {
+		overrides = overrides || {};
+		var queryEl    = document.getElementById("prowlarr_query");
+		var categoryEl = document.getElementById("prowlarr_category");
+		var searchBtn  = document.getElementById("prowlarr_search_btn");
+
+		var query    = overrides.query    !== undefined ? overrides.query    : (queryEl.value || "").trim();
+		var category = overrides.category !== undefined ? overrides.category : (categoryEl ? categoryEl.value : "");
+		var indexers = overrides.indexers !== undefined ? overrides.indexers.slice() : selectedIndexers.slice();
+
+		if (!query) {
+			setStatus("Enter a search term.", "warn");
+			if (queryEl) queryEl.focus();
+			return;
+		}
+
+		// Reflect overrides back into the UI (for history replay)
+		if (queryEl && queryEl.value !== query) queryEl.value = query;
+		if (categoryEl && categoryEl.value !== category) categoryEl.value = category;
+		if (overrides.indexers !== undefined) {
+			selectedIndexers = indexers.slice();
+			renderIndexerList();
+		}
+
+		// If a previous search is still running, cancel it first. The bg
+		// handler already supersedes controllers, but doing it explicitly
+		// here gives us a clean UI transition.
+		if (searchBtn.classList.contains("is-loading")) {
+			Prowlarr.cancelSearch();
+		}
+
+		var mySeq = ++searchSequence;
+
+		var opts = {};
+		if (indexers.length) opts.indexerIds = indexers;
+		if (category) opts.categories = [category];
+		if (ExtensionConfig.prowlarr_results_limit) opts.limit = ExtensionConfig.prowlarr_results_limit;
+
+		setSearchingState(true);
+		setStatus("Searching…", "loading");
+		currentResults = [];
+		renderResults();
+
+		Prowlarr.search(query, opts)
+			.success(function (results) {
+				if (mySeq !== searchSequence) return; // stale response, ignore
+				setSearchingState(false);
+				if (!Array.isArray(results)) {
+					currentResults = [];
+					setStatus("Unexpected response from Prowlarr.", "error");
+					renderResults();
+					return;
+				}
+				currentResults = results;
+				setStatus("");
+				renderResults();
+				if (!results.length) {
+					setStatus("No results for “" + query + "”.", "warn");
+				}
+				saveToHistory({
+					query:      query,
+					indexerIds: indexers,
+					category:   category,
+					ts:         Date.now(),
+					count:      results.length
+				});
+			})
+			.error(function (_, __, err) {
+				if (mySeq !== searchSequence) return; // stale response, ignore
+				setSearchingState(false);
+				currentResults = [];
+				renderResults();
+				if (err && err.type === "cancelled") {
+					setStatus("Search cancelled.", "warn");
+					return;
+				}
+				var msg = "Search failed.";
+				if (err) {
+					if (err.type === "auth")        msg = "✗ Authentication failed — check API key.";
+					else if (err.type === "network") msg = "✗ Cannot reach Prowlarr — check the address.";
+					else if (err.type === "timeout") msg = "✗ Search timed out.";
+					else if (err.type === "http")    msg = "✗ HTTP " + (err.status || "?") + " from Prowlarr.";
+					else if (err.message)            msg = "✗ " + err.message;
+				}
+				setStatus(msg, "error");
+			});
+	}
+
+	// ── Grab action — POST /api/v1/search {guid, indexerId} ─────────────
+	function grabRelease(result, button) {
+		if (!result || !result.guid || !result.indexerId) {
+			setStatus("This release is missing guid/indexerId — cannot grab.", "error");
+			return;
+		}
+		if (button) {
+			button.disabled = true;
+			button.textContent = "Sending…";
+		}
+		setStatus("Grabbing “" + result.title + "” via Prowlarr…", "loading");
+
+		Prowlarr.grab(result.guid, result.indexerId)
+			.success(function () {
+				setStatus("Sent “" + result.title + "” to Prowlarr's download client.", "success");
+				if (button) {
+					button.textContent = "✓ Sent";
+					button.classList.add("p_send_sent");
+				}
+			})
+			.error(function (_, __, err) {
+				var msg = "Grab failed.";
+				if (err) {
+					if (err.type === "http" && err.status === 400)      msg = "✗ Prowlarr rejected this release (400). Check that a download client is configured in Prowlarr.";
+					else if (err.type === "http" && err.status === 500) msg = "✗ Prowlarr couldn't push to the download client (500). Check the Prowlarr logs.";
+					else if (err.type === "auth")                       msg = "✗ API key rejected by Prowlarr.";
+					else if (err.type === "network")                    msg = "✗ Cannot reach Prowlarr.";
+					else if (err.type === "timeout")                    msg = "✗ Grab timed out.";
+					else if (err.type === "http")                       msg = "✗ HTTP " + err.status + " from Prowlarr.";
+					else if (err.message)                                msg = "✗ " + err.message;
+				}
+				setStatus(msg, "error");
+				if (button) {
+					button.disabled = false;
+					button.textContent = "⬇ Grab";
+				}
+			});
+	}
+
+	// ── Clipboard ───────────────────────────────────────────────────────
+	function copyToClipboard(text) {
+		if (!text) return;
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(function () {
+				setStatus("Copied URL to clipboard.", "success");
+			}).catch(function () { fallbackCopy(text); });
+		} else {
+			fallbackCopy(text);
+		}
+	}
+
+	function fallbackCopy(text) {
+		var ta = document.createElement("textarea");
+		ta.value = text;
+		ta.style.position = "fixed";
+		ta.style.left = "-9999px";
+		document.body.appendChild(ta);
+		ta.select();
+		try {
+			document.execCommand("copy");
+			setStatus("Copied URL to clipboard.", "success");
+		} catch (_) {
+			setStatus("Could not copy — select the URL manually.", "error");
+		}
+		document.body.removeChild(ta);
+	}
+
+	// ── Search History ──────────────────────────────────────────────────
+	function getHistory(cb) {
+		try {
+			chrome.storage.local.get(HISTORY_KEY, function (items) {
+				var arr = (items && Array.isArray(items[HISTORY_KEY])) ? items[HISTORY_KEY] : [];
+				cb(arr);
+			});
+		} catch (_) { cb([]); }
+	}
+
+	function setHistory(arr, cb) {
+		var payload = {};
+		payload[HISTORY_KEY] = arr;
+		chrome.storage.local.set(payload, function () {
+			if (cb) cb();
+		});
+	}
+
+	function historyKeyOf(entry) {
+		// Deduplicate by query + sorted indexers + category (case-insensitive query).
+		var ixs = (entry.indexerIds || []).slice().sort(function (a, b) { return a - b; }).join(",");
+		return (entry.query || "").trim().toLowerCase() + "|" + ixs + "|" + (entry.category || "");
+	}
+
+	function saveToHistory(entry) {
+		getHistory(function (arr) {
+			var key = historyKeyOf(entry);
+			// Drop any existing entry with the same key, then prepend
+			arr = arr.filter(function (e) { return historyKeyOf(e) !== key; });
+			arr.unshift(entry);
+			if (arr.length > HISTORY_MAX) arr.length = HISTORY_MAX;
+			setHistory(arr, function () {
+				// If the History tab is currently visible, refresh it
+				var panel = document.getElementById("tab-history");
+				if (panel && panel.classList.contains("active")) renderHistory();
+			});
+		});
+	}
+
+	function formatRelativeTs(ts) {
+		if (!ts) return "";
+		var diffSec = Math.max(0, (Date.now() - ts) / 1000);
+		if (diffSec < 60)        return "just now";
+		if (diffSec < 3600)      return Math.floor(diffSec / 60) + "m ago";
+		if (diffSec < 86400)     return Math.floor(diffSec / 3600) + "h ago";
+		if (diffSec < 86400*30)  return Math.floor(diffSec / 86400) + "d ago";
+		if (diffSec < 86400*365) return Math.floor(diffSec / (86400 * 30)) + "mo ago";
+		return Math.floor(diffSec / (86400 * 365)) + "y ago";
+	}
+
+	function describeFilters(entry) {
+		var parts = [];
+		if (!entry.indexerIds || !entry.indexerIds.length) {
+			parts.push("All indexers");
+		} else if (entry.indexerIds.length === 1) {
+			parts.push(indexerMap[entry.indexerIds[0]] || ("Indexer #" + entry.indexerIds[0]));
+		} else {
+			parts.push(entry.indexerIds.length + " indexers");
+		}
+		if (entry.category) {
+			for (var i = 0; i < CATEGORY_OPTIONS.length; i++) {
+				if (CATEGORY_OPTIONS[i].value === entry.category) {
+					parts.push(CATEGORY_OPTIONS[i].label);
+					break;
+				}
+			}
+		}
+		return parts.join(" · ");
+	}
+
+	pub.renderHistory = renderHistory;
+	function renderHistory() {
+		var listEl = document.getElementById("prowlarr_history_list");
+		if (!listEl) return;
+		listEl.innerHTML = '<div class="ph-empty">Loading…</div>';
+
+		getHistory(function (arr) {
+			if (!arr.length) {
+				listEl.innerHTML = '<div class="ph-empty">No searches yet.</div>';
+				return;
+			}
+			var parts = [];
+			for (var i = 0; i < arr.length; i++) {
+				var e = arr[i];
+				var countLabel = typeof e.count === "number"
+					? (e.count === 1 ? "1 result" : e.count + " results")
+					: "";
+				parts.push(
+					'<div class="ph-entry" data-i="' + i + '">' +
+						'<div class="ph-main">' +
+							'<div class="ph-query">' + escapeHtml(e.query) + '</div>' +
+							'<div class="ph-meta">' +
+								'<span class="ph-when">' + formatRelativeTs(e.ts) + '</span>' +
+								'<span class="ph-sep">·</span>' +
+								'<span class="ph-filters">' + escapeHtml(describeFilters(e)) + '</span>' +
+								(countLabel ? '<span class="ph-sep">·</span><span class="ph-count">' + countLabel + '</span>' : '') +
+							'</div>' +
+						'</div>' +
+						'<div class="ph-actions">' +
+							'<button type="button" class="ph-replay" title="Run this search again">⟳</button>' +
+							'<button type="button" class="ph-delete" title="Remove from history">✕</button>' +
+						'</div>' +
+					'</div>'
+				);
+			}
+			listEl.innerHTML = parts.join("");
+
+			// Cache the array for click handlers
+			listEl._historyCache = arr;
+		});
+	}
+
+	function wireHistory() {
+		var listEl  = document.getElementById("prowlarr_history_list");
+		var clearEl = document.getElementById("prowlarr_history_clear");
+		if (!listEl || !clearEl) return;
+
+		clearEl.addEventListener("click", function () {
+			if (!confirm("Clear all search history?")) return;
+			setHistory([], renderHistory);
+		});
+
+		// Clicking the main area replays the search; explicit buttons for
+		// replay and delete also work.
+		DomHelper.on(listEl, "click", ".ph-main", function () {
+			replayFromEntryEl(this.closest(".ph-entry"));
+		});
+		DomHelper.on(listEl, "click", ".ph-replay", function (e) {
+			e.stopPropagation();
+			replayFromEntryEl(this.closest(".ph-entry"));
+		});
+		DomHelper.on(listEl, "click", ".ph-delete", function (e) {
+			e.stopPropagation();
+			var row = this.closest(".ph-entry");
+			if (!row) return;
+			var idx = parseInt(row.getAttribute("data-i"), 10);
+			var cached = listEl._historyCache || [];
+			if (isNaN(idx) || !cached[idx]) return;
+			var targetKey = historyKeyOf(cached[idx]);
+			getHistory(function (arr) {
+				arr = arr.filter(function (e) { return historyKeyOf(e) !== targetKey; });
+				setHistory(arr, renderHistory);
+			});
+		});
+	}
+
+	function replayFromEntryEl(row) {
+		if (!row) return;
+		var idx = parseInt(row.getAttribute("data-i"), 10);
+		var listEl = document.getElementById("prowlarr_history_list");
+		var cached = listEl ? listEl._historyCache : null;
+		if (isNaN(idx) || !cached || !cached[idx]) return;
+		var e = cached[idx];
+		// Switch to Search tab then fire the query
+		document.dispatchEvent(new CustomEvent("SwitchTab", { detail: "search" }));
+		// Ensure indexers are loaded so we can render selection state properly
+		if (!indexersLoaded && !loadIndexersInFlight) loadIndexers();
+		runSearch({
+			query:    e.query,
+			indexers: e.indexerIds || [],
+			category: e.category || ""
+		});
+	}
+
+	// ── Initialization ──────────────────────────────────────────────────
+	pub.init = function () {
+		if (initialized) return;
+		initialized = true;
+
+		loadCategories();
+		wireIndexerDropdown();
+		loadIndexers();   // eager — do not wait for the user to click
+		wireHistory();
+
+		var form     = document.getElementById("prowlarr_form");
+		var queryEl  = document.getElementById("prowlarr_query");
+		var searchBtn = document.getElementById("prowlarr_search_btn");
+		var tbody    = document.getElementById("prowlarr_results_body");
+		var headers  = document.querySelectorAll("#prowlarr_results thead th[data-sort]");
+
+		var link = document.getElementById("prowlarr_webui_link");
+		if (link) link.href = Prowlarr.endpoint();
+
+		if (form) {
+			form.addEventListener("submit", function (e) {
+				e.preventDefault();
+				runSearch();
+			});
+		}
+		// Clicking the search button while a search is in flight cancels
+		// instead of starting a new one. We intercept in the capture phase so
+		// it runs before the form's submit handler.
+		if (searchBtn) {
+			searchBtn.addEventListener("click", function (e) {
+				if (searchBtn.classList.contains("is-loading")) {
+					e.preventDefault();
+					e.stopPropagation();
+					cancelSearch();
+				}
+			}, true);
+		}
+		if (queryEl) {
+			queryEl.addEventListener("keydown", function (e) {
+				if (e.keyCode === 13) {
+					e.preventDefault();
+					runSearch();
+				}
+			});
+			document.addEventListener("ProwlarrTabActivated", function () {
+				setTimeout(function () { queryEl.focus(); }, 50);
+				// Retry indexer load if the first attempt failed during cold start
+				if (!indexersLoaded && !loadIndexersInFlight) loadIndexers();
+			});
+		}
+
+		document.addEventListener("ProwlarrHistoryTabActivated", renderHistory);
+
+		for (var i = 0; i < headers.length; i++) {
+			headers[i].addEventListener("click", function () {
+				var col = this.getAttribute("data-sort");
+				if (col === sortColumn) {
+					sortDesc = !sortDesc;
+				} else {
+					sortColumn = col;
+					sortDesc = (col !== "title" && col !== "indexer");
+				}
+				renderResults();
+			});
+		}
+
+		if (tbody) {
+			DomHelper.on(tbody, "click", ".p_send", function () {
+				var row = this.closest(".prowlarr_row");
+				if (!row) return;
+				var idx = parseInt(row.getAttribute("data-idx"), 10);
+				var result = currentResults[idx];
+				if (result) grabRelease(result, this);
+			});
+			DomHelper.on(tbody, "click", ".p_copy", function () {
+				copyToClipboard(this.getAttribute("data-url"));
+			});
+		}
+
+		setStatus("Ready. Enter a search term.", "");
+	};
+
+	pub.refreshIndexers = function () { indexersLoaded = false; loadIndexers(); };
+
+	return pub;
+}());

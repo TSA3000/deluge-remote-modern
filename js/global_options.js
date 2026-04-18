@@ -12,7 +12,16 @@ var ExtensionConfig = {
 	debug_mode: false,
 	dark_mode: "system",
 	icon_pack: "classic",
-	torrents_per_page: 0
+	torrents_per_page: 0,
+
+	// ── Prowlarr integration ──────────────────────────────────────────
+	prowlarr_enabled:       false,
+	prowlarr_protocol:      "http",
+	prowlarr_ip:            "",
+	prowlarr_port:          "9696",
+	prowlarr_base:          "",
+	prowlarr_api_key:       "",
+	prowlarr_results_limit: 100
 };
 
 chrome.storage.onChanged.addListener(function (changes, namespace) {

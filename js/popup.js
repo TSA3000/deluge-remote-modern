@@ -38,9 +38,6 @@ document.addEventListener("DOMContentLoaded", function () {
 		var managed = torrent.autoManaged ? "managed" : "unmanaged";
 		var finishedClass = torrent.is_finished ? " finished" : "";
 		var sizeText = (torrent.progress != 100 ? torrent.getHumanDownloadedSize() + " of " : "") + torrent.getHumanSize();
-		var labelCellHtml = Torrents.hasPlugin("Label")
-			? '<td class="table_cell_label"><select class="label_select" data-torrent-id="' + torrent.id + '">' + cachedLabelOptionsHtml + '</select></td>'
-			: "";
 
 		return '<div class="torrent_row" data-id="' + torrent.id + '">' +
 			'<table><tr>' +
@@ -53,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
 			'<td class="table_cell_ratio">Ratio: ' + torrent.getRatio() + '</td>' +
 			'<td class="table_cell_peers">Peers: ' + torrent.num_peers + '/' + torrent.total_peers + '</td>' +
 			'<td class="table_cell_seeds">Seeds: ' + torrent.num_seeds + '/' + torrent.total_seeds + '</td>' +
-			labelCellHtml +
+			'<td class="table_cell_label"><select class="label_select" data-torrent-id="' + torrent.id + '">' + cachedLabelOptionsHtml + '</select></td>' +
 			'<td class="table_cell_speed">' + torrent.getSpeeds() + '</td>' +
 			'</tr></table>' +
 			'<table><tr><td class="table_cell_progress">' +
@@ -172,21 +169,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
 		var htmlParts = [];
 		var labelValues = [];
-		var labelEnabled = Torrents.hasPlugin("Label");
 		for (var p = 0; p < pageItems.length; p++) {
 			htmlParts.push(buildRowHtml(pageItems[p]));
-			if (labelEnabled) {
-				labelValues.push({ id: pageItems[p].id, label: pageItems[p].label || "" });
-			}
+			labelValues.push({ id: pageItems[p].id, label: pageItems[p].label || "" });
 		}
 
 		torrentContainer.innerHTML = htmlParts.join("");
 
-		if (labelEnabled) {
-			for (var j = 0, jlen = labelValues.length; j < jlen; j++) {
-				var sel = torrentContainer.querySelector('.label_select[data-torrent-id="' + labelValues[j].id + '"]');
-				if (sel) sel.value = labelValues[j].label;
-			}
+		for (var j = 0, jlen = labelValues.length; j < jlen; j++) {
+			var sel = torrentContainer.querySelector('.label_select[data-torrent-id="' + labelValues[j].id + '"]');
+			if (sel) sel.value = labelValues[j].label;
 		}
 
 		// Update pagination controls
@@ -236,6 +228,11 @@ document.addEventListener("DOMContentLoaded", function () {
 			})
 			.error(function () {
 				debug_log("Failed: " + method);
+				// Refresh on error too so the UI re-syncs with the server.
+				// After an optimistic removal that the server rejected,
+				// forceFullUpdateNext() has already been called, so this
+				// refresh will re-fetch the full list and restore the row.
+				updateTableDelay(250);
 			});
 	}
 
@@ -341,6 +338,8 @@ document.addEventListener("DOMContentLoaded", function () {
 		if (!rowData) return;
 
 		var isCancel = this.classList.contains("rm_cancel");
+		var isDelete = this.classList.contains("rm_torrent") || this.classList.contains("rm_torrent_data");
+		var row      = this.closest(".torrent_row");
 
 		if (this.classList.contains("rm_torrent")) {
 			DelugeMethod("core.remove_torrent", rowData.torrent, false);
@@ -348,14 +347,29 @@ document.addEventListener("DOMContentLoaded", function () {
 			DelugeMethod("core.remove_torrent", rowData.torrent, true);
 		}
 
-		// Remove delete options and show actions again
+		// Optimistic removal — the existing update pipeline uses diff
+		// updates that never delete stale torrents, and event polling can
+		// take up to ~1s. Drop the row from local state and the DOM right
+		// away so the user sees the torrent disappear immediately. If the
+		// server ends up rejecting the delete, the forced full update
+		// (queued below via forceFullUpdateNext) will re-add it.
+		if (isDelete) {
+			Torrents.removeById(rowData.torrent.id);
+			Torrents.forceFullUpdateNext();
+			renderGlobalInformation();
+			if (row) {
+				DomHelper.fadeOut(row, 200, function () { row.remove(); });
+			}
+			return;
+		}
+
+		// Cancel path: just hide the delete options and restore the main
+		// action buttons.
 		DomHelper.fadeOut(deleteOpts, 200, function () {
 			deleteOpts.remove();
 			var actions = td.querySelector(".main_actions");
 			if (actions) {
 				DomHelper.fadeIn(actions, 200, function () {
-					// Only force an immediate refresh if the user clicked Cancel.
-					// If they deleted a torrent, DelugeMethod handles the refresh safely.
 					if (isCancel) {
 						resumeTableRefresh();
 						updateTable();
@@ -483,24 +497,6 @@ document.addEventListener("DOMContentLoaded", function () {
 		});
 	}());
 
-	// ── Plugin-aware UI ────────────────────────────────────────────────
-	// Hide UI elements that depend on a plugin we couldn't detect on the server.
-	function applyPluginVisibility() {
-		var labelGroup = document.querySelector(".label-filter-group");
-		if (labelGroup) {
-			labelGroup.style.display = Torrents.hasPlugin("Label") ? "" : "none";
-		}
-	}
-	document.addEventListener("Torrents:pluginsChanged", function () {
-		applyPluginVisibility();
-		renderTable(); // rebuild rows so the per-row label cell appears/disappears
-	});
-	// Initial state: hide until we know the answer (avoid flash of useless UI)
-	(function () {
-		var labelGroup = document.querySelector(".label-filter-group");
-		if (labelGroup) labelGroup.style.display = "none";
-	}());
-
 	// ── Pagination Controls ────────────────────────────────────────────
 	(function () {
 		var prevBtn = document.getElementById("page_prev");
@@ -598,6 +594,76 @@ document.addEventListener("DOMContentLoaded", function () {
 		else if (request.msg === "extension_deactivated") deactivated();
 		else if (request.msg === "auto_login_failed") autoLoginFailed();
 	});
+
+	// ── Tab Navigation ─────────────────────────────────────────────────
+	// Second & third tabs ("Search Indexers" and "History") are only shown
+	// when Prowlarr is enabled.
+	(function () {
+		var tabNav     = document.getElementById("tab_nav");
+		var searchTab  = tabNav ? tabNav.querySelector('[data-tab="search"]')  : null;
+		var historyTab = tabNav ? tabNav.querySelector('[data-tab="history"]') : null;
+		var torrentsTab = tabNav ? tabNav.querySelector('[data-tab="torrents"]') : null;
+		if (!tabNav || !searchTab || !historyTab || !torrentsTab) return;
+
+		function applyProwlarrVisibility() {
+			var enabled = !!ExtensionConfig.prowlarr_enabled;
+			if (enabled) {
+				tabNav.classList.add("has-tabs");
+				searchTab.style.display  = "";
+				historyTab.style.display = "";
+				if (typeof ProwlarrSearch !== "undefined") ProwlarrSearch.init();
+			} else {
+				searchTab.style.display  = "none";
+				historyTab.style.display = "none";
+				// If the user just disabled it while sitting on one of the
+				// Prowlarr tabs, bounce them back to the torrents view.
+				if (searchTab.classList.contains("active") ||
+				    historyTab.classList.contains("active")) {
+					activateTab("torrents");
+				}
+				tabNav.classList.remove("has-tabs");
+			}
+		}
+
+		function activateTab(name) {
+			var tabs   = tabNav.querySelectorAll(".tab");
+			var panels = document.querySelectorAll(".tab-panel");
+			for (var i = 0; i < tabs.length; i++) {
+				tabs[i].classList.toggle("active", tabs[i].getAttribute("data-tab") === name);
+			}
+			for (var j = 0; j < panels.length; j++) {
+				panels[j].classList.toggle("active", panels[j].id === "tab-" + name);
+			}
+			if (name === "search") {
+				document.dispatchEvent(new Event("ProwlarrTabActivated"));
+			} else if (name === "history") {
+				document.dispatchEvent(new Event("ProwlarrHistoryTabActivated"));
+			}
+		}
+
+		tabNav.addEventListener("click", function (e) {
+			var t = e.target.closest(".tab");
+			if (!t) return;
+			e.preventDefault();
+			var name = t.getAttribute("data-tab");
+			if (name) activateTab(name);
+		});
+
+		// Allow other modules (e.g. history-replay) to request a tab switch
+		document.addEventListener("SwitchTab", function (e) {
+			if (e && e.detail) activateTab(e.detail);
+		});
+
+		chrome.storage.onChanged.addListener(function (changes) {
+			if (changes.prowlarr_enabled) applyProwlarrVisibility();
+		});
+
+		if (typeof ExtensionConfig !== "undefined" &&
+			Object.prototype.hasOwnProperty.call(ExtensionConfig, "prowlarr_enabled")) {
+			applyProwlarrVisibility();
+		}
+		document.addEventListener("ExtensionConfigReady", applyProwlarrVisibility);
+	}());
 
 	checkStatus();
 });
