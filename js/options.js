@@ -64,22 +64,33 @@ function saveOptions(callback) {
 	}
 
 	// Encrypt whichever secrets changed, chained through Promises
-	var pwPromise = passwordChanged
-		? PasswordCrypto.encrypt(plainPassword).catch(function (err) {
-			console.error("Failed to encrypt password:", err);
-			return plainPassword;
-		})
-		: Promise.resolve(null);
-
-	var pkPromise = prowlarrKeyChanged
-		? PasswordCrypto.encrypt(plainProwlarrKey).catch(function (err) {
-			console.error("Failed to encrypt Prowlarr API key:", err);
-			return plainProwlarrKey;
-		})
-		: Promise.resolve(null);
+	var pwPromise = encryptIfChanged(plainPassword, passwordChanged, "password");
+	var pkPromise = encryptIfChanged(plainProwlarrKey, prowlarrKeyChanged, "Prowlarr API key");
 
 	Promise.all([pwPromise, pkPromise]).then(function (values) {
 		doSave(values[0], values[1]);
+	});
+}
+
+function encryptIfChanged(plain, changed, label) {
+	if (!changed) return Promise.resolve(null);
+	return PasswordCrypto.encrypt(plain).catch(function (err) {
+		console.error("Failed to encrypt " + label + ":", err);
+		return plain;
+	});
+}
+
+function bindVisibilityToggle(toggleId, inputId, label) {
+	var toggle = document.getElementById(toggleId);
+	var input  = document.getElementById(inputId);
+	if (!toggle || !input) return;
+	toggle.addEventListener("click", function () {
+		var reveal = (input.type === "password");
+		input.type = reveal ? "text" : "password";
+		this.textContent = reveal ? "🙈" : "👁";
+		var prefix = reveal ? "Hide " : "Show ";
+		this.setAttribute("aria-label", prefix + label);
+		this.title = prefix + label;
 	});
 }
 
@@ -162,23 +173,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	updateUrlPreview();
 
 	// ── Password show/hide toggle ──────────────────────────────────────
-	var pwToggle = document.getElementById("password_toggle");
-	if (pwToggle) {
-		pwToggle.addEventListener("click", function () {
-			var pw = document.getElementById("password");
-			if (pw.type === "password") {
-				pw.type = "text";
-				this.textContent = "🙈";
-				this.setAttribute("aria-label", "Hide password");
-				this.title = "Hide password";
-			} else {
-				pw.type = "password";
-				this.textContent = "👁";
-				this.setAttribute("aria-label", "Show password");
-				this.title = "Show password";
-			}
-		});
-	}
+	bindVisibilityToggle("password_toggle", "password", "password");
 
 	// ── Prowlarr: fieldset toggle, URL preview, API key toggle, test ───
 	var prowlarrEnableEl = document.getElementById("prowlarr_enabled");
@@ -212,23 +207,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	updateProwlarrUrlPreview();
 
 	// Show/hide Prowlarr API key
-	var keyToggle = document.getElementById("prowlarr_api_key_toggle");
-	if (keyToggle) {
-		keyToggle.addEventListener("click", function () {
-			var input = document.getElementById("prowlarr_api_key");
-			if (input.type === "password") {
-				input.type = "text";
-				this.textContent = "🙈";
-				this.setAttribute("aria-label", "Hide API key");
-				this.title = "Hide API key";
-			} else {
-				input.type = "password";
-				this.textContent = "👁";
-				this.setAttribute("aria-label", "Show API key");
-				this.title = "Show API key";
-			}
-		});
-	}
+	bindVisibilityToggle("prowlarr_api_key_toggle", "prowlarr_api_key", "API key");
 
 	// Test Prowlarr connection
 	var prowlarrTestBtn = document.getElementById("test_prowlarr_connection");
