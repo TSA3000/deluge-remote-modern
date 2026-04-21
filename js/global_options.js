@@ -13,6 +13,8 @@ var ExtensionConfig = {
 	dark_mode: "system",
 	icon_pack: "classic",
 	torrents_per_page: 0,
+	show_per_page_in_popup: false,
+	always_show_pagination: false,
 
 	// ── Prowlarr integration ──────────────────────────────────────────
 	prowlarr_enabled:       false,
