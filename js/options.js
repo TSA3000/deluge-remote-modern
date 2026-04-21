@@ -368,7 +368,15 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
 			return true;
 		});
 		var statusEl = document.getElementById("status-message");
-		statusEl.innerHTML = messages.join("<br>") + "<br><br>";
+		// AMO-safe DOM construction (avoid innerHTML). Equivalent to
+		//   statusEl.innerHTML = messages.join("<br>") + "<br><br>";
+		statusEl.textContent = "";
+		for (var m = 0; m < messages.length; m++) {
+			if (m > 0) statusEl.appendChild(document.createElement("br"));
+			statusEl.appendChild(document.createTextNode(messages[m]));
+		}
+		statusEl.appendChild(document.createElement("br"));
+		statusEl.appendChild(document.createElement("br"));
 		statusEl.style.display = "";
 		statusEl.style.opacity = "1";
 
