@@ -13,7 +13,10 @@ document.addEventListener("DOMContentLoaded", function () {
 	var REFRESH_INTERVAL = ExtensionConfig.refresh_interval || 1000;
 	var refreshTimer = Timer(REFRESH_INTERVAL);
 
-	var cachedLabelOptionsHtml = '<option value="">(No Label)</option>';
+	// Labels cache — AMO-safe pattern: cache array of label strings, then
+	// build real <option> DOM nodes in buildRow(). Previously cached an
+	// HTML string and assigned via innerHTML.
+	var cachedLabelValues = [];  // array of label strings (not including "No Label")
 	var lastLabelHash = "";
 	// Pagination
 	var currentPage = 0;
@@ -34,51 +37,125 @@ document.addEventListener("DOMContentLoaded", function () {
 		var hash = labels.join("|");
 		if (hash === lastLabelHash) return;
 		lastLabelHash = hash;
-
-		var parts = ['<option value="">(No Label)</option>'];
-		for (var i = 0; i < labels.length; i++) {
-			parts.push('<option value="' + labels[i] + '">' + labels[i] + '</option>');
-		}
-		cachedLabelOptionsHtml = parts.join("");
+		cachedLabelValues = labels.slice();
 	}
 
-	function buildRowHtml(torrent) {
+	// Builds and returns a fresh <select class="label_select"> DOM node with
+	// "(No Label)" and every cached label as <option> children.
+	function buildLabelSelect(torrentId) {
+		var sel = document.createElement("select");
+		sel.className = "label_select";
+		sel.dataset.torrentId = torrentId;
+
+		var noLabel = document.createElement("option");
+		noLabel.value = "";
+		noLabel.textContent = "(No Label)";
+		sel.appendChild(noLabel);
+
+		for (var i = 0; i < cachedLabelValues.length; i++) {
+			var opt = document.createElement("option");
+			opt.value = cachedLabelValues[i];
+			opt.textContent = cachedLabelValues[i];
+			sel.appendChild(opt);
+		}
+		return sel;
+	}
+
+	// Small helper: createElement with className + optional textContent
+	function el(tag, className, text) {
+		var n = document.createElement(tag);
+		if (className) n.className = className;
+		if (text !== undefined && text !== null) n.textContent = text;
+		return n;
+	}
+
+	function buildRow(torrent) {
 		var state = torrent.state === "Paused" ? "resume" : "pause";
 		var managed = torrent.autoManaged ? "managed" : "unmanaged";
 		var finishedClass = torrent.is_finished ? " finished" : "";
 		var sizeText = (torrent.progress != 100 ? torrent.getHumanDownloadedSize() + " of " : "") + torrent.getHumanSize();
 
-		return '<div class="torrent_row" data-id="' + torrent.id + '">' +
-			'<table><tr>' +
-			'<td class="table_cell_position">' + torrent.getPosition() + '</td>' +
-			'<td class="table_cell_name">' + torrent.name + '</td>' +
-			'</tr></table>' +
-			'<table><tr>' +
-			'<td class="table_cell_size">' + sizeText + '</td>' +
-			'<td class="table_cell_eta">ETA: ' + torrent.getEta() + '</td>' +
-			'<td class="table_cell_ratio">Ratio: ' + torrent.getRatio() + '</td>' +
-			'<td class="table_cell_peers">Peers: ' + torrent.num_peers + '/' + torrent.total_peers + '</td>' +
-			'<td class="table_cell_seeds">Seeds: ' + torrent.num_seeds + '/' + torrent.total_seeds + '</td>' +
-			'<td class="table_cell_label"><select class="label_select" data-torrent-id="' + torrent.id + '">' + cachedLabelOptionsHtml + '</select></td>' +
-			'<td class="table_cell_speed">' + torrent.getSpeeds() + '</td>' +
-			'</tr></table>' +
-			'<table><tr><td class="table_cell_progress">' +
-			'<div class="progress_bar">' +
-			'<div class="inner ' + torrent.state + finishedClass + '" style="width:' + torrent.getPercent() + '"></div>' +
-			'<span>' + torrent.getPercent() + ' - ' + torrent.state + '</span>' +
-			'</div>' +
-			'</td></tr></table>' +
-			'<table><tr><td class="table_cell_actions">' +
-			'<div class="main_actions">' +
-			'<a class="state ' + state + '" title="Pause/Resume Torrent"></a>' +
-			'<a class="move_up" title="Move Torrent Up"></a>' +
-			'<a class="move_down" title="Move Torrent Down"></a>' +
-			'<a class="toggle_managed ' + managed + '" title="Toggle Auto-managed State"></a>' +
-			'<a class="force_recheck" title="Force re-check data"></a>' +
-			'<a class="delete" title="Delete Options"></a>' +
-			'</div>' +
-			'</td></tr></table>' +
-			'</div>';
+		// Outer row container
+		var row = document.createElement("div");
+		row.className = "torrent_row";
+		row.dataset.id = torrent.id;
+
+		// ── Row 1: position + name ──────────────────────────────────
+		var tbl1 = document.createElement("table");
+		var tr1  = document.createElement("tr");
+		tr1.appendChild(el("td", "table_cell_position", String(torrent.getPosition())));
+		tr1.appendChild(el("td", "table_cell_name", torrent.name));
+		tbl1.appendChild(tr1);
+		row.appendChild(tbl1);
+
+		// ── Row 2: size / eta / ratio / peers / seeds / label / speed
+		var tbl2 = document.createElement("table");
+		var tr2  = document.createElement("tr");
+		tr2.appendChild(el("td", "table_cell_size",   sizeText));
+		tr2.appendChild(el("td", "table_cell_eta",    "ETA: "   + torrent.getEta()));
+		tr2.appendChild(el("td", "table_cell_ratio",  "Ratio: " + torrent.getRatio()));
+		tr2.appendChild(el("td", "table_cell_peers",  "Peers: " + torrent.num_peers + "/" + torrent.total_peers));
+		tr2.appendChild(el("td", "table_cell_seeds",  "Seeds: " + torrent.num_seeds + "/" + torrent.total_seeds));
+
+		var labelCell = el("td", "table_cell_label");
+		labelCell.appendChild(buildLabelSelect(torrent.id));
+		tr2.appendChild(labelCell);
+
+		tr2.appendChild(el("td", "table_cell_speed",  torrent.getSpeeds()));
+		tbl2.appendChild(tr2);
+		row.appendChild(tbl2);
+
+		// ── Row 3: progress bar ─────────────────────────────────────
+		var tbl3 = document.createElement("table");
+		var tr3  = document.createElement("tr");
+		var progCell = el("td", "table_cell_progress");
+		var progBar  = el("div", "progress_bar");
+		var progInner = el("div", "inner " + torrent.state + finishedClass);
+		progInner.style.width = torrent.getPercent();
+		var progSpan = el("span", null, torrent.getPercent() + " - " + torrent.state);
+		progBar.appendChild(progInner);
+		progBar.appendChild(progSpan);
+		progCell.appendChild(progBar);
+		tr3.appendChild(progCell);
+		tbl3.appendChild(tr3);
+		row.appendChild(tbl3);
+
+		// ── Row 4: actions ──────────────────────────────────────────
+		var tbl4 = document.createElement("table");
+		var tr4  = document.createElement("tr");
+		var actionsCell = el("td", "table_cell_actions");
+		var actionsDiv  = el("div", "main_actions");
+
+		var btnState = el("a", "state " + state);
+		btnState.title = "Pause/Resume Torrent";
+		actionsDiv.appendChild(btnState);
+
+		var btnUp = el("a", "move_up");
+		btnUp.title = "Move Torrent Up";
+		actionsDiv.appendChild(btnUp);
+
+		var btnDown = el("a", "move_down");
+		btnDown.title = "Move Torrent Down";
+		actionsDiv.appendChild(btnDown);
+
+		var btnManaged = el("a", "toggle_managed " + managed);
+		btnManaged.title = "Toggle Auto-managed State";
+		actionsDiv.appendChild(btnManaged);
+
+		var btnRecheck = el("a", "force_recheck");
+		btnRecheck.title = "Force re-check data";
+		actionsDiv.appendChild(btnRecheck);
+
+		var btnDelete = el("a", "delete");
+		btnDelete.title = "Delete Options";
+		actionsDiv.appendChild(btnDelete);
+
+		actionsCell.appendChild(actionsDiv);
+		tr4.appendChild(actionsCell);
+		tbl4.appendChild(tr4);
+		row.appendChild(tbl4);
+
+		return row;
 	}
 
 	function updateTableDelay(ms) {
@@ -176,14 +253,18 @@ document.addEventListener("DOMContentLoaded", function () {
 		var endIdx = (TORRENTS_PER_PAGE === 0) ? filtered.length : startIdx + TORRENTS_PER_PAGE;
 		var pageItems = filtered.slice(startIdx, endIdx);
 
-		var htmlParts = [];
+		// AMO-safe DOM construction — DocumentFragment batches insertions
+		// into a single reflow. Much better perf than loop-appending to
+		// the live DOM, and no innerHTML.
+		var frag = document.createDocumentFragment();
 		var labelValues = [];
 		for (var p = 0; p < pageItems.length; p++) {
-			htmlParts.push(buildRowHtml(pageItems[p]));
+			frag.appendChild(buildRow(pageItems[p]));
 			labelValues.push({ id: pageItems[p].id, label: pageItems[p].label || "" });
 		}
 
-		torrentContainer.innerHTML = htmlParts.join("");
+		torrentContainer.textContent = "";
+		torrentContainer.appendChild(frag);
 
 		for (var j = 0, jlen = labelValues.length; j < jlen; j++) {
 			var sel = torrentContainer.querySelector('.label_select[data-torrent-id="' + labelValues[j].id + '"]');
@@ -348,10 +429,22 @@ document.addEventListener("DOMContentLoaded", function () {
 		DomHelper.fadeOut(actions, 200, function () {
 			var div = document.createElement("div");
 			div.className = "delete-options";
-			div.innerHTML =
-				'<a class="rm_cancel" title="Cancel"></a>' +
-				'<a class="rm_torrent_data" title="Delete with data"></a>' +
-				'<a class="rm_torrent" title="Remove torrent only"></a>';
+
+			var cancel = document.createElement("a");
+			cancel.className = "rm_cancel";
+			cancel.title = "Cancel";
+			div.appendChild(cancel);
+
+			var rmData = document.createElement("a");
+			rmData.className = "rm_torrent_data";
+			rmData.title = "Delete with data";
+			div.appendChild(rmData);
+
+			var rmOnly = document.createElement("a");
+			rmOnly.className = "rm_torrent";
+			rmOnly.title = "Remove torrent only";
+			div.appendChild(rmOnly);
+
 			td.appendChild(div);
 			DomHelper.hide(td);
 			DomHelper.fadeIn(td, 200);
@@ -628,7 +721,7 @@ document.addEventListener("DOMContentLoaded", function () {
 				var span = overlay.querySelector(".overlay_inner span");
 				if (span) {
 					span.className = "error";
-					span.innerHTML = message;
+					span.textContent = message;
 				}
 				DomHelper.show(overlay);
 			}
@@ -653,7 +746,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		var span = overlay.querySelector(".overlay_inner span");
 		if (span) {
 			span.classList.add("error");
-			span.innerHTML = chrome.i18n.getMessage("error_unauthenticated");
+			span.textContent = chrome.i18n.getMessage("error_unauthenticated");
 		}
 		DomHelper.show(overlay);
 	}
