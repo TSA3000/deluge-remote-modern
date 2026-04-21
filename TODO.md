@@ -6,25 +6,18 @@ Active backlog of features and improvements for the Chrome extension.
 
 ## 🚀 Next Release (v2.9.0)
 
-### Quick UI Controls in Popup
+### Remaining Prowlarr UI Work
 
-**1. Torrents per page selector directly on popup**
-- Add dropdown (10 / 20 / 50 / 100 / All) in the popup toolbar next to pagination
-- Persist selection via `chrome.storage.sync` → `torrents_per_page`
-- Currently only configurable in Options — move to popup for quick switching
-- **Files**: `popup.html` (add `<select id="per_page_popup">`), `popup.js` (change handler + sync back to storage), `css/popup.css` (styling)
-- **Est**: 30 min
-
-**2. Prowlarr result pagination + per-page selector**
+**1. Prowlarr result pagination + per-page selector**
 - Apply the same paginated pattern from the Torrents tab to Prowlarr search results
-- Add "Results per page" dropdown (10 / 20 / 50 / 100 / All) on the Prowlarr tab
+- Add "Results per page" dropdown (5 / 10 / 20 / 50 / 100 / All) on the Prowlarr tab
 - Prev / Next buttons + page info (`Page 1 / 5`)
 - Reset to page 1 on new search or sort change
 - **Files**: `popup.html` (pagination bar inside `#tab-search`), `js/prowlarr_search.js` (slice `currentResults` by page, `updateResultsPagination()`), `css/prowlarr.css` (styling — reuse pagination pattern)
 - **Est**: 1.5 hours
 - **Storage key**: `prowlarr_results_per_page` (default 20)
 
-**3. Prowlarr result filter (client-side)**
+**2. Prowlarr result filter (client-side)**
 - Add a small filter input above the results table
 - Real-time filter by release title (150ms debounce, Esc to clear)
 - Filters the already-fetched `currentResults` array — no new API call
@@ -32,14 +25,14 @@ Active backlog of features and improvements for the Chrome extension.
 - **Files**: `popup.html` (add `<input id="prowlarr_results_filter">`), `js/prowlarr_search.js` (filter function), `css/prowlarr.css`
 - **Est**: 45 min
 
-**4. Prowlarr history pagination + per-page selector**
-- Same treatment for History tab — paginate with per-page dropdown
+**3. Prowlarr history pagination + per-page selector**
+- Same treatment for History tab — paginate with per-page dropdown (5 / 10 / 20 / 50 / 100 / All)
 - Filter box for searching across history entries (by query text)
 - **Files**: `popup.html` (pagination bar inside `#tab-history`), `js/prowlarr_search.js` (`renderHistory` pages through `_historyCache`), `css/prowlarr.css`
 - **Est**: 1 hour
 - **Storage key**: `prowlarr_history_per_page` (default 20)
 
-**5. Persist last Prowlarr search across popup close/reopen**
+**4. Persist last Prowlarr search across popup close/reopen**
 - Currently `currentResults` lives in memory only — closing the popup wipes the last search, forcing a re-run
 - Store the last search state in `chrome.storage.session` so re-opening the popup shows the same results until the user runs a new search
 - State to persist: `query`, `category`, `indexerIds`, `results` array, `ts` timestamp, `sortColumn`, `sortDesc`
@@ -50,18 +43,7 @@ Active backlog of features and improvements for the Chrome extension.
 - Show a subtle indicator (e.g. "Last search: 'ubuntu' · 3 min ago") above the results when restoring cached results
 - **Files**: `js/prowlarr_search.js` (`saveLastSearch()`, `restoreLastSearch()` on `pub.init`), possibly `popup.html` (tiny "restored" label)
 - **Est**: 1 hour
-
-**6. Remember selected indexers across popup close/reopen**
-- Currently the indexer multi-select resets to "All indexers" each time the popup opens — annoying if user always searches specific indexers (e.g. only private trackers)
-- Persist `selectedIndexers` array in `chrome.storage.sync` so the preference syncs across devices
-- Storage key: `prowlarr_selected_indexers` (default `[]` = all)
-- On indexer menu change, write the selection immediately
-- On `loadIndexers()` success, restore saved selection into `selectedIndexers` before `renderIndexerList()` paints the checkboxes
-- Validate restored IDs against the fresh indexer list — drop IDs that no longer exist (indexer removed in Prowlarr)
-- If all saved IDs are invalid, fall back to "All indexers"
-- **Files**: `js/prowlarr_search.js` (save in indexer change handler, restore in `loadIndexers` callback), `js/global_options.js` (add default), `js/background.js` (add default)
-- **Est**: 30 min
-- **Note**: Complements feature #5 — together they mean "popup reopens exactly as you left it"
+- **Note**: Pairs with the already-shipped #6 (remember indexers) — together they mean "popup reopens exactly as you left it"
 
 ---
 
@@ -84,6 +66,7 @@ Active backlog of features and improvements for the Chrome extension.
 - **Force reannounce button** — Per-torrent (`core.force_reannounce`)
 - **Queue top/bottom buttons** — Not just up/down one step (`core.queue_top` / `core.queue_bottom`)
 - **Move storage** — Right-click → Move Storage dialog (`core.move_storage`)
+- **Metadata event subscription** — Subscribe to `TorrentMetadataReceivedEvent` so magnet torrents update their name/size as soon as metadata resolves (currently waits for next 10th-poll full update)
 
 ### Big features
 
@@ -94,11 +77,20 @@ Active backlog of features and improvements for the Chrome extension.
 
 ## 🐛 Known Issues
 
-- None currently tracked — v2.8.0 is stable
+- **Magnet torrents from some indexers stay stuck at info-hash name with 0 bytes size** — Not an extension bug; Deluge itself fails to fetch metadata when the indexer returns a tracker-less magnet (seen with TorrentDownload indexer). Same behavior in native Deluge Web UI. Workaround: use a different indexer, or add default public trackers in Deluge → Preferences → BitTorrent.
 
 ---
 
-## ✅ Recently Completed
+## ✅ Recently Completed (post-v2.8.0)
+
+- **Per-page selector in popup** — Dropdown (5 / 10 / 20 / 50 / 100 / All) in the popup pagination bar, gated by a new Options checkbox. Added "Always show pagination bar" option for users who want the bar visible even when not needed. Added "5" as a new per-page option.
+- **Remember selected indexers** — Prowlarr indexer selection persists across popup close/reopen via `chrome.storage.sync`. Stale IDs pruned after each `loadIndexers()`. Live-syncs between popups and devices via `storage.onChanged`.
+- **Refactor options.js** — Extracted `encryptIfChanged()` and `bindVisibilityToggle()` helpers. Both password and Prowlarr API key encryption run in parallel via `Promise.all`. Dedup status messages on bulk save.
+- **Fix: size display `0.0 KiB of 0.0 KiB`** — `torrent.js` now prefers Deluge's authoritative `total_done` and `total_wanted` fields over calculation from `total_size × progress`. Matches native Deluge Web UI behavior.
+- **Fix: HTTP 400 on multi-indexer Prowlarr search** — Prowlarr's `/api/v1/search` expects repeated `indexerIds` / `categories` query params, not comma-joined. `buildUrl()` now expands arrays to repeated params.
+- **background.js section banners** — 7 labeled regions with table of contents. Makes the 664-line service worker easier to navigate via editor code folding.
+
+### Pre-v2.8.0
 
 - **v2.8.0** — Prowlarr integration, optimistic delete, auto-reconnect
 - **v2.7.0** — Auto-reconnect to daemon
@@ -118,3 +110,4 @@ Active backlog of features and improvements for the Chrome extension.
 - Import/export extension settings as JSON
 - Theme editor (custom accent colors)
 - Multi-language support (already have `_locales/en/messages.json` — add more)
+- **Split `background.js` into modules via `importScripts`** — Consider once file exceeds ~1000 lines or if a new contributor finds it hard to navigate. Extract `DelugeAPI`, `ProwlarrAPI`, `PasswordCrypto` into their own files. ~2 hours, low risk, reversible.
