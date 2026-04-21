@@ -20,8 +20,6 @@ let ExtensionConfig = {
 	debug_mode:       false,
 	dark_mode:        "system",
 	torrents_per_page: 0,
-	show_per_page_in_popup: false,
-	always_show_pagination: false,
 
 	// ── Prowlarr integration ───────────────────────────────────────────
 	prowlarr_enabled:       false,
@@ -30,7 +28,8 @@ let ExtensionConfig = {
 	prowlarr_port:          "9696",
 	prowlarr_base:          "",
 	prowlarr_api_key:       "",
-	prowlarr_results_limit: 100
+	prowlarr_results_limit: 100,
+	prowlarr_selected_indexers: []
 };
 
 function loadConfig() {
@@ -131,8 +130,18 @@ const ProwlarrAPI = {
 		if (query && typeof query === "object") {
 			const parts = [];
 			for (const key in query) {
-				if (query[key] === null || query[key] === undefined || query[key] === "") continue;
-				parts.push(encodeURIComponent(key) + "=" + encodeURIComponent(query[key]));
+				const val = query[key];
+				if (val === null || val === undefined || val === "") continue;
+				if (Array.isArray(val)) {
+					// Expand arrays to repeated params:  key=a&key=b&key=c
+					// Required by Prowlarr for indexerIds and categories.
+					for (let i = 0; i < val.length; i++) {
+						if (val[i] === null || val[i] === undefined || val[i] === "") continue;
+						parts.push(encodeURIComponent(key) + "=" + encodeURIComponent(val[i]));
+					}
+				} else {
+					parts.push(encodeURIComponent(key) + "=" + encodeURIComponent(val));
+				}
 			}
 			if (parts.length) {
 				url += (url.indexOf("?") === -1 ? "?" : "&") + parts.join("&");
