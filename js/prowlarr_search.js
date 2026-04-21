@@ -119,6 +119,34 @@ var ProwlarrSearch = (function () {
 		el.className = "prowlarr-status" + (cls ? " " + cls : "");
 	}
 
+	// ── DOM helpers (AMO-safe: build DOM nodes instead of innerHTML) ────
+	function clearChildren(n) {
+		if (n) n.textContent = "";
+	}
+
+	// Create an element with optional className / attrs / textContent
+	function mkEl(tag, attrs, text) {
+		var e = document.createElement(tag);
+		if (attrs) {
+			for (var k in attrs) {
+				if (k === "className") e.className = attrs[k];
+				else if (k === "dataset") {
+					for (var d in attrs[k]) e.dataset[d] = attrs[k][d];
+				}
+				else if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+			}
+		}
+		if (text !== undefined && text !== null) e.textContent = text;
+		return e;
+	}
+
+	// Shortcut for the common "replace contents with a single styled message div"
+	function setMessageDiv(container, className, text) {
+		if (!container) return;
+		clearChildren(container);
+		container.appendChild(mkEl("div", { className: className }, text));
+	}
+
 	// ── Indexer multi-select ────────────────────────────────────────────
 	function loadIndexers() {
 		if (loadIndexersInFlight) return;
@@ -126,14 +154,14 @@ var ProwlarrSearch = (function () {
 
 		var itemsEl = document.getElementById("prowlarr_indexer_items");
 		if (itemsEl && !indexersLoaded) {
-			itemsEl.innerHTML = '<div class="ms-loading">Loading indexers…</div>';
+			setMessageDiv(itemsEl, "ms-loading", "Loading indexers…");
 		}
 
 		Prowlarr.getIndexers()
 			.success(function (list) {
 				loadIndexersInFlight = false;
 				if (!Array.isArray(list)) {
-					if (itemsEl) itemsEl.innerHTML = '<div class="ms-error">Unexpected response.</div>';
+					setMessageDiv(itemsEl, "ms-error", "Unexpected response.");
 					return;
 				}
 				indexerList = list
@@ -151,10 +179,12 @@ var ProwlarrSearch = (function () {
 				loadIndexersInFlight = false;
 				debug_log("Prowlarr: failed to load indexers", err);
 				if (itemsEl) {
-					itemsEl.innerHTML = '<div class="ms-error">Could not load indexers.' +
-						' <a href="#" id="prowlarr_indexer_retry">Retry</a></div>';
-					var retry = document.getElementById("prowlarr_indexer_retry");
-					if (retry) retry.addEventListener("click", function (e) {
+					clearChildren(itemsEl);
+					var errDiv = mkEl("div", { className: "ms-error" }, "Could not load indexers. ");
+					var retry = mkEl("a", { href: "#", id: "prowlarr_indexer_retry" }, "Retry");
+					errDiv.appendChild(retry);
+					itemsEl.appendChild(errDiv);
+					retry.addEventListener("click", function (e) {
 						e.preventDefault();
 						loadIndexers();
 					});
@@ -167,26 +197,32 @@ var ProwlarrSearch = (function () {
 		if (!itemsEl) return;
 
 		if (!indexerList.length) {
-			itemsEl.innerHTML = '<div class="ms-error">No indexers configured in Prowlarr.</div>';
+			setMessageDiv(itemsEl, "ms-error", "No indexers configured in Prowlarr.");
 			return;
 		}
 
-		var parts = [];
+		clearChildren(itemsEl);
+		var frag = document.createDocumentFragment();
 		for (var i = 0; i < indexerList.length; i++) {
 			var ix = indexerList[i];
-			var checked = selectedIndexers.indexOf(ix.id) !== -1 ? " checked" : "";
 			var protoText = ix.protocol === "usenet" ? "nzb" : (ix.protocol || "");
-			parts.push(
-				'<label class="ms-item" data-id="' + ix.id + '">' +
-				'<input type="checkbox" class="ms-check" value="' + ix.id + '"' + checked + ' />' +
-				'<span class="ms-name">' + escapeHtml(ix.name) + '</span>' +
-				(protoText
-					? '<span class="ms-proto ms-proto-' + escapeHtml(ix.protocol) + '">' + escapeHtml(protoText) + '</span>'
-					: '') +
-				'</label>'
-			);
+
+			var lbl = mkEl("label", { className: "ms-item", "data-id": ix.id });
+
+			var chk = mkEl("input", { type: "checkbox", className: "ms-check", value: ix.id });
+			if (selectedIndexers.indexOf(ix.id) !== -1) chk.checked = true;
+			lbl.appendChild(chk);
+
+			lbl.appendChild(mkEl("span", { className: "ms-name" }, ix.name || ""));
+
+			if (protoText) {
+				lbl.appendChild(mkEl("span", {
+					className: "ms-proto ms-proto-" + (ix.protocol || "")
+				}, protoText));
+			}
+			frag.appendChild(lbl);
 		}
-		itemsEl.innerHTML = parts.join("");
+		itemsEl.appendChild(frag);
 		updateIndexerAllState();
 		updateIndexerLabel();
 	}
@@ -286,7 +322,7 @@ var ProwlarrSearch = (function () {
 	function loadCategories() {
 		var select = document.getElementById("prowlarr_category");
 		if (!select) return;
-		select.innerHTML = "";
+		select.textContent = "";
 		for (var i = 0; i < CATEGORY_OPTIONS.length; i++) {
 			var opt = document.createElement("option");
 			opt.value = CATEGORY_OPTIONS[i].value;
@@ -327,7 +363,7 @@ var ProwlarrSearch = (function () {
 	}
 
 	// ── Row rendering ───────────────────────────────────────────────────
-	function buildRowHtml(result, index) {
+	function buildRow(result, index) {
 		var proto = result.protocol || "torrent";
 		var canGrab = !!(result.guid && result.indexerId);
 		var hasDownload = !!result.downloadUrl;
@@ -337,21 +373,61 @@ var ProwlarrSearch = (function () {
 		var seeds = (typeof result.seeders === "number") ? result.seeders : "—";
 		var leech = (typeof result.leechers === "number") ? result.leechers : "—";
 
-		return '<tr class="prowlarr_row" data-idx="' + index + '">' +
-			'<td class="p_col_title">' +
-				(info ? '<a href="' + escapeHtml(info) + '" target="_blank" rel="noopener">' + escapeHtml(result.title) + '</a>' : escapeHtml(result.title)) +
-				'<span class="p_proto p_proto_' + escapeHtml(proto) + '">' + escapeHtml(proto) + '</span>' +
-			'</td>' +
-			'<td class="p_col_indexer">' + escapeHtml(indexerName(result)) + '</td>' +
-			'<td class="p_col_size">' + formatSize(result.size) + '</td>' +
-			'<td class="p_col_age" title="' + escapeHtml(result.publishDate || "") + '">' + formatAge(result.publishDate) + '</td>' +
-			'<td class="p_col_sl"><span class="seeds">' + seeds + '</span> / <span class="leech">' + leech + '</span></td>' +
-			'<td class="p_col_actions">' +
-				(canGrab ? '<button type="button" class="p_send clean-gray" title="Grab — Prowlarr pushes to its download client">⬇ Grab</button>' : '') +
-				(hasDownload ? '<button type="button" class="p_copy" title="Copy download URL" data-url="' + escapeHtml(result.downloadUrl) + '">⧉</button>' : '') +
-				(hasMagnet   ? '<button type="button" class="p_copy" title="Copy magnet URL"   data-url="' + escapeHtml(result.magnetUrl)   + '">🧲</button>' : '') +
-			'</td>' +
-		'</tr>';
+		var tr = mkEl("tr", { className: "prowlarr_row", "data-idx": index });
+
+		// Title cell
+		var titleCell = mkEl("td", { className: "p_col_title" });
+		if (info) {
+			titleCell.appendChild(mkEl("a", { href: info, target: "_blank", rel: "noopener" }, result.title));
+		} else {
+			titleCell.appendChild(document.createTextNode(result.title || ""));
+		}
+		titleCell.appendChild(mkEl("span", { className: "p_proto p_proto_" + proto }, proto));
+		tr.appendChild(titleCell);
+
+		// Indexer / Size / Age
+		tr.appendChild(mkEl("td", { className: "p_col_indexer" }, indexerName(result)));
+		tr.appendChild(mkEl("td", { className: "p_col_size" }, formatSize(result.size)));
+		tr.appendChild(mkEl("td", {
+			className: "p_col_age",
+			title: result.publishDate || ""
+		}, formatAge(result.publishDate)));
+
+		// S / L cell
+		var slCell = mkEl("td", { className: "p_col_sl" });
+		slCell.appendChild(mkEl("span", { className: "seeds" }, String(seeds)));
+		slCell.appendChild(document.createTextNode(" / "));
+		slCell.appendChild(mkEl("span", { className: "leech" }, String(leech)));
+		tr.appendChild(slCell);
+
+		// Actions cell
+		var actionsCell = mkEl("td", { className: "p_col_actions" });
+		if (canGrab) {
+			actionsCell.appendChild(mkEl("button", {
+				type: "button",
+				className: "p_send clean-gray",
+				title: "Grab — Prowlarr pushes to its download client"
+			}, "⬇ Grab"));
+		}
+		if (hasDownload) {
+			actionsCell.appendChild(mkEl("button", {
+				type: "button",
+				className: "p_copy",
+				title: "Copy download URL",
+				"data-url": result.downloadUrl
+			}, "⧉"));
+		}
+		if (hasMagnet) {
+			actionsCell.appendChild(mkEl("button", {
+				type: "button",
+				className: "p_copy",
+				title: "Copy magnet URL",
+				"data-url": result.magnetUrl
+			}, "🧲"));
+		}
+		tr.appendChild(actionsCell);
+
+		return tr;
 	}
 
 	function renderResults() {
@@ -359,18 +435,25 @@ var ProwlarrSearch = (function () {
 		if (!tbody) return;
 
 		if (!currentResults.length) {
-			tbody.innerHTML = '<tr><td colspan="6" class="p_empty">No results.</td></tr>';
+			clearChildren(tbody);
+			var emptyRow = mkEl("tr");
+			var emptyCell = mkEl("td", { className: "p_empty" }, "No results.");
+			emptyCell.colSpan = 6;
+			emptyRow.appendChild(emptyCell);
+			tbody.appendChild(emptyRow);
 			updateCountLabel(0);
 			return;
 		}
 
 		var sorted = sortResults(currentResults);
-		var parts = [];
-		for (var i = 0; i < sorted.length; i++) {
-			parts.push(buildRowHtml(sorted[i], i));
-		}
 		currentResults = sorted;
-		tbody.innerHTML = parts.join("");
+
+		clearChildren(tbody);
+		var frag = document.createDocumentFragment();
+		for (var i = 0; i < sorted.length; i++) {
+			frag.appendChild(buildRow(sorted[i], i));
+		}
+		tbody.appendChild(frag);
 		updateCountLabel(sorted.length);
 
 		var headers = document.querySelectorAll("#prowlarr_results thead th[data-sort]");
@@ -641,38 +724,55 @@ var ProwlarrSearch = (function () {
 	function renderHistory() {
 		var listEl = document.getElementById("prowlarr_history_list");
 		if (!listEl) return;
-		listEl.innerHTML = '<div class="ph-empty">Loading…</div>';
+		setMessageDiv(listEl, "ph-empty", "Loading…");
 
 		getHistory(function (arr) {
 			if (!arr.length) {
-				listEl.innerHTML = '<div class="ph-empty">No searches yet.</div>';
+				setMessageDiv(listEl, "ph-empty", "No searches yet.");
 				return;
 			}
-			var parts = [];
+
+			clearChildren(listEl);
+			var frag = document.createDocumentFragment();
+
 			for (var i = 0; i < arr.length; i++) {
 				var e = arr[i];
 				var countLabel = typeof e.count === "number"
 					? (e.count === 1 ? "1 result" : e.count + " results")
 					: "";
-				parts.push(
-					'<div class="ph-entry" data-i="' + i + '">' +
-						'<div class="ph-main">' +
-							'<div class="ph-query">' + escapeHtml(e.query) + '</div>' +
-							'<div class="ph-meta">' +
-								'<span class="ph-when">' + formatRelativeTs(e.ts) + '</span>' +
-								'<span class="ph-sep">·</span>' +
-								'<span class="ph-filters">' + escapeHtml(describeFilters(e)) + '</span>' +
-								(countLabel ? '<span class="ph-sep">·</span><span class="ph-count">' + countLabel + '</span>' : '') +
-							'</div>' +
-						'</div>' +
-						'<div class="ph-actions">' +
-							'<button type="button" class="ph-replay" title="Run this search again">⟳</button>' +
-							'<button type="button" class="ph-delete" title="Remove from history">✕</button>' +
-						'</div>' +
-					'</div>'
-				);
+
+				var entry = mkEl("div", { className: "ph-entry", "data-i": i });
+
+				var main = mkEl("div", { className: "ph-main" });
+				main.appendChild(mkEl("div", { className: "ph-query" }, e.query || ""));
+
+				var meta = mkEl("div", { className: "ph-meta" });
+				meta.appendChild(mkEl("span", { className: "ph-when" }, formatRelativeTs(e.ts)));
+				meta.appendChild(mkEl("span", { className: "ph-sep" }, "·"));
+				meta.appendChild(mkEl("span", { className: "ph-filters" }, describeFilters(e)));
+				if (countLabel) {
+					meta.appendChild(mkEl("span", { className: "ph-sep" }, "·"));
+					meta.appendChild(mkEl("span", { className: "ph-count" }, countLabel));
+				}
+				main.appendChild(meta);
+				entry.appendChild(main);
+
+				var actions = mkEl("div", { className: "ph-actions" });
+				actions.appendChild(mkEl("button", {
+					type: "button",
+					className: "ph-replay",
+					title: "Run this search again"
+				}, "⟳"));
+				actions.appendChild(mkEl("button", {
+					type: "button",
+					className: "ph-delete",
+					title: "Remove from history"
+				}, "✕"));
+				entry.appendChild(actions);
+
+				frag.appendChild(entry);
 			}
-			listEl.innerHTML = parts.join("");
+			listEl.appendChild(frag);
 
 			// Cache the array for click handlers
 			listEl._historyCache = arr;
