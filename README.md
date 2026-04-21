@@ -1,5 +1,11 @@
 # Deluge Remote Modern
 
+[![Chrome Web Store Version](https://img.shields.io/chrome-web-store/v/okjmppgdfmooahhabhcdjdhnmnkgkila?label=Chrome%20Web%20Store)](https://chromewebstore.google.com/detail/okjmppgdfmooahhabhcdjdhnmnkgkila)
+[![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/okjmppgdfmooahhabhcdjdhnmnkgkila?label=users)](https://chromewebstore.google.com/detail/okjmppgdfmooahhabhcdjdhnmnkgkila)
+[![Chrome Web Store Rating](https://img.shields.io/chrome-web-store/rating/okjmppgdfmooahhabhcdjdhnmnkgkila?label=rating)](https://chromewebstore.google.com/detail/okjmppgdfmooahhabhcdjdhnmnkgkila)
+[![GitHub release](https://img.shields.io/github/v/release/TSA3000/deluge-remote-modern?label=release)](https://github.com/TSA3000/deluge-remote-modern/releases)
+[![License](https://img.shields.io/github/license/TSA3000/deluge-remote-modern)](./MIT-LICENSE)
+
 A Chrome extension for managing a remote Deluge torrent server from your browser toolbar. Fork of [YodaDaCoda/chrome-deluge-remote](https://github.com/YodaDaCoda/chrome-deluge-remote) modernized for Manifest V3 with dark mode, themes, and more.
 
 **Chrome Web Store:** `okjmppgdfmooahhabhcdjdhnmnkgkila`
