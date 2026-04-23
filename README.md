@@ -5,6 +5,9 @@
 [![Chrome Web Store Rating](https://img.shields.io/chrome-web-store/rating/okjmppgdfmooahhabhcdjdhnmnkgkila?label=rating)](https://chromewebstore.google.com/detail/okjmppgdfmooahhabhcdjdhnmnkgkila)
 [![GitHub release](https://img.shields.io/github/v/release/TSA3000/deluge-remote-modern?label=release)](https://github.com/TSA3000/deluge-remote-modern/releases)
 [![License](https://img.shields.io/github/license/TSA3000/deluge-remote-modern)](./MIT-LICENSE)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-support-FFDD00?style=flat-square&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/tsa3000)
+
+---
 
 A Chrome extension for managing a remote Deluge torrent server from your browser toolbar. Fork of [YodaDaCoda/chrome-deluge-remote](https://github.com/YodaDaCoda/chrome-deluge-remote) modernized for Manifest V3 with dark mode, themes, and more.
 
