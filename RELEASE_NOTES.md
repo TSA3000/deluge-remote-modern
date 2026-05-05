@@ -2,6 +2,40 @@
 
 ---
 
+## v2.8.1 — Per-Device Credential Storage (Multi-Device Sync Fix)
+*2026-05-05*
+
+Patch release fixing a credential-sync deadlock that broke the extension on multi-device setups.
+
+### Bug Fixes
+
+- **Repeated password prompts when using the extension on multiple PCs sharing a Chrome account** — On a second device, the saved password field would be blank and re-entering it would cause the first device to lose its password too, in an endless loop. Root cause: the encryption key is generated per-install and stored in `storage.local` (never syncs), but the encrypted password was stored in `storage.sync` (syncs across devices). PC2 received PC1's ciphertext, couldn't decrypt it with its own key, prompted for the password, re-encrypted and synced back, which then broke PC1 — and so on. Same bug applied to the Prowlarr API key.
+
+### New Behavior
+
+- **New per-device option in Basic Setup: "Keep credentials on this device only"** (default: enabled). When enabled, your Deluge password and Prowlarr API key are stored encrypted in `storage.local` only, never syncing to your Chrome account. Each device manages its own credentials independently — no more loop. Helper text in the options page explains the trade-off.
+- **Disabling the option** restores the v2.8.0 behavior of writing credentials to both `storage.local` and `storage.sync`. This is intended for single-device users who want their credentials backed up to their Chrome account; using it on multiple active devices simultaneously will recreate the loop (now with informed consent).
+- **One-time migration on upgrade** — if you're upgrading from v2.8.0 with credentials in `storage.sync`, the migration runs automatically on next launch: the encrypted password is copied into `storage.local` and the new local-only flag is set. Your active device keeps working without a re-prompt; secondary devices get the same migration on their next launch and prompt once for the password (since their local key can't decrypt the other device's blob), then work seamlessly thereafter.
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `manifest.json` | Version bumped to `2.8.1` |
+| `options.html` | New checkbox row "Keep credentials on this device only" added to Basic Setup with explanatory helper text |
+| `js/global_options.js` | New `store_credentials_locally: true` default; new `CREDENTIAL_KEYS` constant; load logic merges `storage.local` and `storage.sync` and routes credential keys based on the flag; one-time upgrade migration; `onChanged` listener ignores stale sync writes for credentials when in local-only mode |
+| `js/options.js` | Save logic splits writes between `storage.local` (toggle + credentials always cached) and `storage.sync` (non-credentials, plus credentials only when synced mode is selected); load logic merges both namespaces; new status message for the toggle |
+| `js/background.js` | New `store_credentials_locally` default in `ExtensionConfig`; `loadConfig()` reads from both namespaces and applies the same routing; `onChanged` listener mirrors the same stale-sync filter |
+| `js/crypto.js` | Header comment updated to reflect dual-namespace architecture |
+
+### Compatibility
+
+- **Storage schema is backward-compatible**: the new `store_credentials_locally` key lives in `storage.local`. Existing sync data is left untouched (preserved as a fallback for users who downgrade or stay in synced mode).
+- **No permissions changes**.
+- **Upgrades from v2.8.0 are transparent on the active device**. Secondary devices prompt once for the password after migration, then work normally.
+
+---
+
 ## v2.8.0 — Prowlarr Integration & Optimistic Delete
 *2026-04-18*
 

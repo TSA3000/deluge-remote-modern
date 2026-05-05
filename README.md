@@ -38,6 +38,12 @@ A Chrome extension for managing a remote Deluge torrent server from your browser
 
 ## Version History
 
+### 2026-05-05 v2.8.1 — Per-Device Credential Storage (Multi-Device Sync Fix)
+- Fixed repeated password prompts on multi-device setups — encryption key is per-install but credentials were in `storage.sync`, causing devices to fight over the encrypted blob in a loop
+- New "Keep credentials on this device only" checkbox in Basic Setup (default: enabled) — credentials now stay in `storage.local` per-device by default
+- Disabling the option restores synced-credential behavior for single-device users who want browser-account backup
+- One-time migration copies any existing `storage.sync` credentials into `storage.local` on upgrade
+
 ### 2026-04-18 v2.8.0 — Prowlarr Integration & Optimistic Delete
 - Full Prowlarr search from the popup — tabbed UI (Torrents / Search Indexers / History)
 - Indexer multi-select, sortable results, one-click grab
