@@ -56,6 +56,13 @@ let ExtensionConfig = {
 
 // Storage-key conventions match global_options.js. See crypto.js header for
 // the full picture of where credentials live in each mode.
+//
+// Migration note: the toggle move from storage.local → storage.sync (2.8.3+)
+// is performed by global_options.js when the popup or options page loads.
+// This service worker doesn't migrate on its own — it just reads the legacy
+// local toggle as a fallback. That's safe because every user eventually
+// opens the popup, at which point migration runs and propagates the toggle
+// to sync. Until then, the runtime functions correctly using the local copy.
 
 function loadConfig() {
 	return Promise.all([
@@ -96,7 +103,8 @@ function loadConfig() {
 				? localItems.prowlarr_api_key : syncItems.prowlarr_api_key;
 		} else {
 			// Plaintext: read from sync.*_plain. Stored under unsuffixed
-			// runtime key for uniform access via PasswordCrypto.decrypt.
+			// runtime key so PasswordCrypto.decrypt() (which auto-detects
+			// format) can be called uniformly regardless of mode.
 			ExtensionConfig.password = syncItems.password_plain;
 			ExtensionConfig.prowlarr_api_key = syncItems.prowlarr_api_key_plain;
 		}
@@ -131,7 +139,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 		// Toggle flipped to OFF (e.g. via sync from another device): the
 		// encrypted blob in this device's storage.local is now stale. Clear
-		// it so PasswordCrypto.decrypt doesn't see leftover state.
+		// it so PasswordCrypto.decrypt() doesn't see leftover state.
 		if (key === "store_credentials_locally" && changes[key].newValue === false) {
 			chrome.storage.local.remove(["password", "prowlarr_api_key"]);
 		}
@@ -250,10 +258,6 @@ const ProwlarrAPI = {
 			return { error: { type: "config", message: "Prowlarr address not configured" } };
 		}
 
-		// PasswordCrypto.decrypt() handles both formats: returns the input
-		// unchanged when it's already plaintext (sync mode), decrypts when
-		// it's an encrypted blob (local mode). See PasswordCrypto definition
-		// below for the format-detection logic.
 		const apiKey = await PasswordCrypto.decrypt(ExtensionConfig.prowlarr_api_key);
 		if (!apiKey) {
 			return { error: { type: "auth", message: "Prowlarr API key not configured" } };
@@ -430,10 +434,8 @@ const PasswordCrypto = {
 	}
 };
 
-// ── Login ──────────────────────────────────────────────────────────────────
+// ── Login (with password decryption) ────────────────────────────────────────
 async function login() {
-	// PasswordCrypto.decrypt() handles both encrypted blobs (local mode) and
-	// plaintext (sync mode) — see its definition for format-detection logic.
 	const plainPassword = await PasswordCrypto.decrypt(ExtensionConfig.password);
 	return DelugeAPI.call("auth.login", [plainPassword]);
 }
