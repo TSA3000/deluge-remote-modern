@@ -54,9 +54,8 @@ let ExtensionConfig = {
 	prowlarr_selected_indexers: []
 };
 
-// Keys that contain encrypted credentials. Read/write namespace is determined
-// per-device by ExtensionConfig.store_credentials_locally.
-const CREDENTIAL_KEYS = ["password", "prowlarr_api_key"];
+// Storage-key conventions match global_options.js. See crypto.js header for
+// the full picture of where credentials live in each mode.
 
 function loadConfig() {
 	return Promise.all([
@@ -66,19 +65,27 @@ function loadConfig() {
 		localItems = localItems || {};
 		syncItems = syncItems || {};
 
-		// Sync first (gives us non-credential settings + maybe credentials).
-		ExtensionConfig = { ...ExtensionConfig, ...syncItems };
+		// Apply non-credential settings from sync first.
+		const credentialFields = ["password", "prowlarr_api_key", "password_plain", "prowlarr_api_key_plain"];
+		for (const k in syncItems) {
+			if (credentialFields.includes(k)) continue;
+			ExtensionConfig[k] = syncItems[k];
+		}
 
 		const localOnly = (localItems.store_credentials_locally !== false);
 		ExtensionConfig.store_credentials_locally = localOnly;
 
-		// In local-only mode, override credential fields with the local copy.
 		if (localOnly) {
-			for (const ck of CREDENTIAL_KEYS) {
-				if (localItems[ck] !== undefined) {
-					ExtensionConfig[ck] = localItems[ck];
-				}
-			}
+			// Encrypted: read from local; legacy fall-back to sync (pre-2.8.1).
+			ExtensionConfig.password = localItems.password !== undefined
+				? localItems.password : syncItems.password;
+			ExtensionConfig.prowlarr_api_key = localItems.prowlarr_api_key !== undefined
+				? localItems.prowlarr_api_key : syncItems.prowlarr_api_key;
+		} else {
+			// Plaintext: read from sync.*_plain. Stored under unsuffixed
+			// runtime key for uniform access via PasswordCrypto.resolveCredential.
+			ExtensionConfig.password = syncItems.password_plain;
+			ExtensionConfig.prowlarr_api_key = syncItems.prowlarr_api_key_plain;
 		}
 	});
 }
@@ -90,18 +97,24 @@ let _configReady = loadConfig();
 function waitForConfig() { return _configReady; }
 
 chrome.storage.onChanged.addListener((changes, namespace) => {
+	const credentialFields = ["password", "prowlarr_api_key", "password_plain", "prowlarr_api_key_plain"];
 	for (const key in changes) {
-		// In local-only mode, credential changes coming from storage.sync are
-		// stale (other devices, or our own pre-2.8.1 leftovers) and must not
-		// overwrite the authoritative local copy.
+		// In encrypted-local mode, sync writes for credential fields are
+		// stale (other devices in plaintext mode, or pre-2.8.1 leftovers).
+		// Drop them so they don't overwrite the authoritative local copy.
 		if (
 			namespace === "sync" &&
-			CREDENTIAL_KEYS.indexOf(key) !== -1 &&
+			credentialFields.includes(key) &&
 			ExtensionConfig.store_credentials_locally !== false
 		) {
 			continue;
 		}
-		ExtensionConfig[key] = changes[key].newValue;
+		// Map the on-the-wire key name to the runtime field name.
+		// password_plain → password, prowlarr_api_key_plain → prowlarr_api_key.
+		let runtimeKey = key;
+		if (key === "password_plain") runtimeKey = "password";
+		if (key === "prowlarr_api_key_plain") runtimeKey = "prowlarr_api_key";
+		ExtensionConfig[runtimeKey] = changes[key].newValue;
 		if (key === "context_menu") {
 			updateContextMenu(changes[key].newValue);
 		}
@@ -220,7 +233,10 @@ const ProwlarrAPI = {
 			return { error: { type: "config", message: "Prowlarr address not configured" } };
 		}
 
-		const apiKey = await PasswordCrypto.decrypt(ExtensionConfig.prowlarr_api_key);
+		const apiKey = await PasswordCrypto.resolveCredential(
+			ExtensionConfig.prowlarr_api_key,
+			ExtensionConfig.store_credentials_locally
+		);
 		if (!apiKey) {
 			return { error: { type: "auth", message: "Prowlarr API key not configured" } };
 		}
@@ -396,9 +412,12 @@ const PasswordCrypto = {
 	}
 };
 
-// ── Login (with password decryption) ────────────────────────────────────────
+// ── Login (with password decryption when in encrypted-local mode) ──────────
 async function login() {
-	const plainPassword = await PasswordCrypto.decrypt(ExtensionConfig.password);
+	const plainPassword = await PasswordCrypto.resolveCredential(
+		ExtensionConfig.password,
+		ExtensionConfig.store_credentials_locally
+	);
 	return DelugeAPI.call("auth.login", [plainPassword]);
 }
 

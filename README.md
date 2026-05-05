@@ -38,11 +38,16 @@ A Chrome extension for managing a remote Deluge torrent server from your browser
 
 ## Version History
 
+### 2026-05-05 v2.8.2 — Plain-Text Sync Mode (Multi-Device Convenience)
+- Reworks the v2.8.1 toggle so its unchecked state actually does something useful for multi-device users
+- Checked (default, more secure): credentials AES-GCM encrypted in `storage.local` only, never sync
+- Unchecked (less secure): credentials stored as plain text in `storage.sync` and shared across all devices on the same browser account — convenience for multi-device users, with the trade-off spelled out in the helper text
+- v2.8.1 cohort migration: legacy encrypted blobs in `storage.sync` get cleaned up on first launch
+
 ### 2026-05-05 v2.8.1 — Per-Device Credential Storage (Multi-Device Sync Fix)
-- Fixed repeated password prompts on multi-device setups — encryption key is per-install but credentials were in `storage.sync`, causing devices to fight over the encrypted blob in a loop
-- New "Keep credentials on this device only" checkbox in Basic Setup (default: enabled) — credentials now stay in `storage.local` per-device by default
-- Disabling the option restores synced-credential behavior for single-device users who want browser-account backup
-- One-time migration copies any existing `storage.sync` credentials into `storage.local` on upgrade
+- New "Keep credentials on this device only" checkbox in Basic Setup (default: enabled)
+- Note: in 2.8.1 the unchecked state still encrypted credentials before sending them to sync; see v2.8.2 for the redesigned plaintext-sync behavior
+- One-time migration copies legacy `storage.sync` credentials into `storage.local` on upgrade
 
 ### 2026-04-18 v2.8.0 — Prowlarr Integration & Optimistic Delete
 - Full Prowlarr search from the popup — tabbed UI (Torrents / Search Indexers / History)
