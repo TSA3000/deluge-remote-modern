@@ -2,6 +2,34 @@
 
 ---
 
+## v2.8.4 — Hotfix: PasswordCrypto.resolveCredential is not a function
+*2026-05-05*
+
+Hotfix for a runtime crash in v2.8.3 that broke login and Prowlarr API calls.
+
+### Bug Fixed
+
+- **`PasswordCrypto.resolveCredential is not a function` thrown from `js/background.js:253`** — and a second time from the login function. v2.8.3 introduced a `resolveCredential` helper in `js/crypto.js` (used by the options/popup pages) but the service worker's `js/background.js` embeds its own separate `PasswordCrypto` object that never received the new method. Two call sites in the service worker referenced it, immediately crashing on every login attempt and every Prowlarr search.
+
+### Fix
+
+Both call sites reverted to `PasswordCrypto.decrypt()`, which the service worker's embedded `PasswordCrypto` already implements with format auto-detection: encrypted blobs are decrypted, plaintext passes through unchanged. Same end result, no method ambiguity.
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `manifest.json` | Version bumped to `2.8.4` |
+| `js/background.js` | Two `PasswordCrypto.resolveCredential(...)` calls reverted to `PasswordCrypto.decrypt(...)` (Prowlarr `call()` and `login()`); comments referencing the removed helper updated |
+
+### Compatibility
+
+- No storage schema changes.
+- No permissions changes.
+- Upgrades from v2.8.3 are transparent and immediate (login/Prowlarr start working again on next service worker startup).
+
+---
+
 ## v2.8.3 — Multi-Device Credentials: Plaintext Sync with Account-Wide Toggle
 *2026-05-05*
 
