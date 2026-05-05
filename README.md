@@ -38,11 +38,12 @@ A Chrome extension for managing a remote Deluge torrent server from your browser
 
 ## Version History
 
-### 2026-05-05 v2.8.2 — Plain-Text Sync Mode (Multi-Device Convenience)
-- Reworks the v2.8.1 toggle so its unchecked state actually does something useful for multi-device users
+### 2026-05-05 v2.8.3 — Multi-Device Credentials: Plaintext Sync with Account-Wide Toggle
+- Reworks the v2.8.1 toggle so its unchecked state actually does something useful for multi-device users — and the toggle propagates across devices automatically
 - Checked (default, more secure): credentials AES-GCM encrypted in `storage.local` only, never sync
 - Unchecked (less secure): credentials stored as plain text in `storage.sync` and shared across all devices on the same browser account — convenience for multi-device users, with the trade-off spelled out in the helper text
-- v2.8.1 cohort migration: legacy encrypted blobs in `storage.sync` get cleaned up on first launch
+- Toggle is now stored in `storage.sync.store_credentials_locally` (account-wide) — unchecking on one device propagates the mode change and the plaintext credentials to every device on the same account
+- Migration on upgrade from v2.8.1 moves the toggle from `storage.local` to `storage.sync` and cleans up legacy encrypted blobs in sync
 
 ### 2026-05-05 v2.8.1 — Per-Device Credential Storage (Multi-Device Sync Fix)
 - New "Keep credentials on this device only" checkbox in Basic Setup (default: enabled)
