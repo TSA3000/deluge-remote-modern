@@ -38,6 +38,10 @@ A Chrome extension for managing a remote Deluge torrent server from your browser
 
 ## Version History
 
+### 2026-05-05 v2.8.5 — Hotfix: password lost when toggling credential sync
+- Fixes a bug where toggling "Keep credentials on this device only" off and back on without retyping the password could leave both `storage.local.password` and `storage.sync.password_plain` empty (no password anywhere). Same bug applied to the Prowlarr API key, and the broken state propagated across devices via the account-wide toggle.
+- Stops the Options page debug log from echoing plaintext credentials when debug mode is on.
+
 ### 2026-05-05 v2.8.4 — Hotfix: PasswordCrypto.resolveCredential is not a function
 - Fixes runtime crash in v2.8.3 that broke login and Prowlarr API calls — `js/background.js` referenced `PasswordCrypto.resolveCredential` which only exists in `js/crypto.js`, not in the service worker's embedded `PasswordCrypto` object
 - Both call sites now use `PasswordCrypto.decrypt()`, which already auto-detects format (decrypts ciphertext, passes plaintext through unchanged)
