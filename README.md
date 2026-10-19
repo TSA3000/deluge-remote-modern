@@ -38,6 +38,10 @@ A Chrome extension for managing a remote Deluge torrent server from your browser
 
 ## Version History
 
+### 2026-10-19 v2.8.6 — Fix: no torrents shown without the Label plugin
+- Fixes the popup showing no torrents when the Deluge Label plugin is disabled (empty Label filter was treated as a real filter value)
+- Label filter and per-torrent label dropdown are hidden when the Label plugin is off
+
 ### 2026-05-05 v2.8.5 — Hotfix: password lost when toggling credential sync
 - Fixes a bug where toggling "Keep credentials on this device only" off and back on without retyping the password could leave both `storage.local.password` and `storage.sync.password_plain` empty (no password anywhere). Same bug applied to the Prowlarr API key, and the broken state propagated across devices via the account-wide toggle.
 - Stops the Options page debug log from echoing plaintext credentials when debug mode is on.
