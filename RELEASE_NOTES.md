@@ -2,6 +2,23 @@
 
 ---
 
+## v2.8.7 — Fix: extension changed the theme of websites
+*2026-10-31*
+
+### Bug Fixes
+
+- **Dark mode and icon pack no longer change the data-theme / data-icons attributes on websites you visit; they only apply to the extension's own pages.** — `js/global_options.js` also runs as a content script on every http(s) page, and `applyDarkMode()` / `applyIconPack()` set or removed `data-theme` / `data-icons` on the page's `<html>` element. Sites whose own dark mode uses `data-theme` broke. Both functions now return early unless the page is an extension page.
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `manifest.json` | Version bumped to `2.8.7` |
+| `js/global_options.js` | New `isExtensionPage()`; `applyDarkMode()` and `applyIconPack()` only run on extension pages |
+| `README.md` | Version history entry |
+
+---
+
 ## v2.8.6 — Fix: no torrents shown when the Deluge Label plugin is disabled
 *2026-10-19*
 

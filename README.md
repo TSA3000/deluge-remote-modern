@@ -38,6 +38,9 @@ A Chrome extension for managing a remote Deluge torrent server from your browser
 
 ## Version History
 
+### 2026-10-31 v2.8.7 — Fix: extension changed the theme of websites
+- Dark mode and icon pack no longer change the data-theme / data-icons attributes on websites you visit; they only apply to the extension's own pages.
+
 ### 2026-10-19 v2.8.6 — Fix: no torrents shown without the Label plugin
 - Fixes the popup showing no torrents when the Deluge Label plugin is disabled (empty Label filter was treated as a real filter value)
 - Label filter and per-torrent label dropdown are hidden when the Label plugin is off
