@@ -38,6 +38,12 @@ A Chrome extension for managing a remote Deluge torrent server from your browser
 
 ## Version History
 
+### 2026-10-31 v2.8.8 — Fix: adding torrents fails until the popup is opened, and more
+- Adding a torrent from a page link or magnet no longer fails until the popup has been opened (waits for settings, logs in and connects first)
+- Credentials are no longer wiped by the re-save after a version upgrade
+- Fixes a frozen torrent list, dropdowns closing by themselves, the <blank> filter, descending sort, the refresh interval setting and manual add of URLs with query strings
+- Deluge 2: a stopped daemon is started again; status checks keep running while the background is suspended
+
 ### 2026-10-31 v2.8.7 — Fix: extension changed the theme of websites
 - Dark mode and icon pack no longer change the data-theme / data-icons attributes on websites you visit; they only apply to the extension's own pages.
 
